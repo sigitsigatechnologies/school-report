@@ -2,19 +2,12 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Guru\Resources\ProjectScoreResource;
-use App\Filament\Resources\GuruResource;
-use App\Filament\Resources\ProjectsResource;
-use App\Filament\Resources\StudentResource;
-use App\Filament\Resources\UserResource;
+use App\Filament\Widgets\WelcomeWidget;
 use App\Http\Middleware\RestrictAdminPanelAccess;
-use App\Models\ProjectScore;
-use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -26,7 +19,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Illuminate\Support\Facades\Auth;
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -49,14 +42,17 @@ class AdminPanelProvider extends PanelProvider
             //     ProjectScoreResource::class
             // ])
             
+            ->brandName('SD BOPKRI TUREN') // ubah teks "Laravel"
+            ->brandLogo(asset('images/logo_bopkri.png')) // pasang logo sendiri (ukuran kecil misalnya 32x32px)
+            ->brandLogoHeight('4rem')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                // Widgets\AccountWidget::class,
+                WelcomeWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

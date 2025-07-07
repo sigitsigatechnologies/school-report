@@ -6,11 +6,13 @@ use App\Filament\Resources\GuruResource\Pages;
 use App\Models\Guru;
 use App\Models\JobPosition;
 use App\Models\User;
+use Filament\Forms\Components\MultiSelect;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -38,6 +40,11 @@ class GuruResource extends Resource
                     ->options(JobPosition::pluck('name', 'id'))
                     ->searchable()
                     ->required(),
+                MultiSelect::make('classrooms')
+                    ->relationship('classrooms', 'name')
+                    ->label('Kelas yang Diampu')
+                    ->preload()
+                    ->searchable()
             ]);
     }
 
@@ -49,6 +56,9 @@ class GuruResource extends Resource
                 TextColumn::make('nip'),
                 TextColumn::make('user.name'),
                 TextColumn::make('job.name'),
+                BadgeColumn::make('classrooms.name')
+                    ->label('Kelas Diampu')
+                    ->separator(', ')
             ])
             ->filters([
                 //
@@ -84,19 +94,19 @@ class GuruResource extends Resource
     //     return auth()->user()?->can('guru.view');
     // }
 
-    public static function canCreate(): bool
-    {
-        return auth()->user()?->can('guru.create');
-    }
+    // public static function canCreate(): bool
+    // {
+    //     return auth()->user()?->can('guru.create');
+    // }
 
-    public static function canEdit(Model $record): bool
-    {
-        return auth()->user()?->can('guru.edit');
-    }
+    // public static function canEdit(Model $record): bool
+    // {
+    //     return auth()->user()?->can('guru.edit');
+    // }
 
-    public static function canDelete(Model $record): bool
-    {
-        return auth()->user()?->can('guru.delete');
-    }
+    // public static function canDelete(Model $record): bool
+    // {
+    //     return auth()->user()?->can('guru.delete');
+    // }
 
 }

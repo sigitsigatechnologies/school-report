@@ -33,4 +33,5 @@ class ProjectDetail extends Model
     {
         return $this->belongsTo(CapaianFase::class);
     }
+    
 }

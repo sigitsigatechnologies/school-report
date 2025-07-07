@@ -75,4 +75,9 @@ class PermissionResource extends Resource
             'edit' => Pages\EditPermission::route('/{record}/edit'),
         ];
     }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasRole('super_admin') || auth()->user()?->hasRole('admin');
+    }
 }

@@ -3,12 +3,74 @@
 namespace App\Filament\Resources\ProjectScoreResource\Pages;
 
 use App\Filament\Resources\ProjectScoreResource;
+use App\Models\ProjectDetail;
+use App\Models\ProjectScoreDetail;
+use App\Models\Student;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Notifications\Notification;
 
 class EditProjectScore extends EditRecord
 {
     protected static string $resource = ProjectScoreResource::class;
+
+    protected function afterSave(): void
+    {
+        $this->record->refresh();
+
+        Notification::make()
+            ->title('Data berhasil disimpan')
+            ->success()
+            ->send();
+    }
+
+    protected function handleRecordUpdate(Model $record, array $data): Model
+{
+    $record->update([
+        'project_id' => $data['project_id'],
+    ]);
+
+    $projectId = $data['project_id'];
+
+    // Ambil detail project lengkap dengan capaian fase
+    $projectDetails = ProjectDetail::where('project_id', $projectId)->with('capaianFase')->get();
+    $capaianFases = $projectDetails->pluck('capaianFase')->filter()->unique('id');
+
+    $classroomId = $record->project->detail?->header?->classroom_id;
+    $students = Student::where('classroom_id', $classroomId)->get();
+
+    // Optional: hapus existing detail dulu
+    ProjectScoreDetail::where('project_score_id', $record->id)->delete();
+
+    foreach ($students as $student) {
+        foreach ($capaianFases as $capaian) {
+            $nilaiKey = "nilai_{$student->id}_{$capaian->id}";
+            $noteKey = "noteInputs.{$student->id}_{$capaian->id}";
+
+            $nilai = $data[$nilaiKey] ?? null;
+            $note = data_get($data, $noteKey);
+
+            if ($nilai !== null) {
+                // Cari ID dari project_details yang sesuai capaian_fase
+                $projectDetailId = $projectDetails
+                    ->firstWhere('capaian_fase_id', $capaian->id)?->id;
+
+                ProjectScoreDetail::create([
+                    'project_score_id' => $record->id,
+                    'student_id' => $student->id,
+                    'capaian_fase_id' => $capaian->id,
+                    'parameter_penilaian_id' => $nilai,
+                    'note_project' => $note,
+                    'project_detail_id' => $projectDetailId, // ✅ sekarang disimpan
+                ]);
+            }
+        }
+    }
+
+    return $record;
+}
+
 
     protected function getHeaderActions(): array
     {
@@ -16,4 +78,6 @@ class EditProjectScore extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    
 }

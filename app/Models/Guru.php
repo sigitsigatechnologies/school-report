@@ -30,4 +30,15 @@ class Guru extends Model
         return $this->user?->roles()?->first();
     }
 
+    public function classrooms()
+    {
+        return $this->belongsToMany(Classroom::class, 'classroom_guru');
+    }
+
+    public function siswaDiwalikan()
+    {
+        return $this->hasMany(Student::class, 'wali_id');
+    }
+
+
 }

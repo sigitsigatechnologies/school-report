@@ -6,6 +6,11 @@ use App\Filament\Resources\StudentResource\Pages;
 use App\Filament\Resources\StudentResource\RelationManagers;
 use App\Models\Student;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -29,42 +34,67 @@ class StudentResource extends Resource
             ->schema([
                 Forms\Components\Grid::make(2)
                     ->schema([
-                        Forms\Components\TextInput::make('nis')->label('NIS'),
-                        Forms\Components\TextInput::make('nisn')->label('NISN'),
-                        Forms\Components\TextInput::make('nama')->label('Nama Peserta Didik'),
-                        Forms\Components\Select::make('jenis_kelamin')
+                        TextInput::make('nis')->label('NIS'),
+                        TextInput::make('nisn')->label('NISN'),
+                        TextInput::make('nama')->label('Nama Peserta Didik'),
+                        Select::make('jenis_kelamin')
                             ->label('L/P')
                             ->options(['L' => 'Laki-laki', 'P' => 'Perempuan']),
-                        Forms\Components\TextInput::make('tempat_lahir')->label('Tempat Lahir'),
-                        Forms\Components\DatePicker::make('tanggal_lahir')->label('Tanggal Lahir'),
-                        Forms\Components\TextInput::make('agama'),
-                        Forms\Components\TextInput::make('pendidikan_sebelumnya')->label('Pendidikan Sebelumnya'),
-                        Forms\Components\Textarea::make('alamat')->label('Alamat Peserta Didik')->columnSpanFull(),
-                        Forms\Components\Select::make('classroom_id')
-                        ->label('Kelas')
-                        ->relationship('classroom', 'name') // pastikan relasinya sesuai
-                        ->required(),
+                        TextInput::make('tempat_lahir')->label('Tempat Lahir'),
+                        DatePicker::make('tanggal_lahir')->label('Tanggal Lahir')->maxDate(now()),
+                        Select::make('agama')
+                            ->label('Agama')
+                            ->options([
+                                'Islam' => 'Islam',
+                                'Kristen' => 'Kristen',
+                                'Katolik' => 'Katolik',
+                                'Hindu' => 'Hindu',
+                                'Buddha' => 'Buddha',
+                            ])
+                            ->required()
+                            ->searchable(),
+                        TextInput::make('pendidikan_sebelumnya')->label('Pendidikan Sebelumnya'),
+                        Textarea::make('alamat')->label('Alamat Peserta Didik')->columnSpanFull(),
+                        Select::make('classroom_id')
+                            ->label('Kelas')
+                            ->relationship('classroom', 'name')
+                            ->required()
+                            ->reactive(), 
                     ]),
 
-                Forms\Components\Section::make('Orang Tua')
+                Section::make('Orang Tua')
                     ->schema([
-                        Forms\Components\TextInput::make('nama_ayah')->label('Nama Ayah'),
-                        Forms\Components\TextInput::make('pekerjaan_ayah')->label('Pekerjaan Ayah'),
-                        Forms\Components\TextInput::make('nama_ibu')->label('Nama Ibu'),
-                        Forms\Components\TextInput::make('pekerjaan_ibu')->label('Pekerjaan Ibu'),
+                        TextInput::make('nama_ayah')->label('Nama Ayah'),
+                        TextInput::make('pekerjaan_ayah')->label('Pekerjaan Ayah'),
+                        TextInput::make('nama_ibu')->label('Nama Ibu'),
+                        TextInput::make('pekerjaan_ibu')->label('Pekerjaan Ibu'),
 
-                        Forms\Components\Textarea::make('jalan')->label('Jalan'),
-                        Forms\Components\TextInput::make('kelurahan')->label('Kelurahan / Desa'),
-                        Forms\Components\TextInput::make('kapanewon'),
-                        Forms\Components\TextInput::make('kota')->label('Kab/Kota'),
-                        Forms\Components\TextInput::make('provinsi'),
+                        Textarea::make('jalan')->label('Jalan'),
+                        TextInput::make('kelurahan')->label('Kelurahan / Desa'),
+                        TextInput::make('kapanewon'),
+                        TextInput::make('kota')->label('Kab/Kota'),
+                        TextInput::make('provinsi'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Wali Peserta Didik')
+                Section::make('Wali Peserta Didik')
                     ->schema([
-                        Forms\Components\TextInput::make('nama_wali')->label('Nama Wali'),
-                        Forms\Components\TextInput::make('pekerjaan_wali')->label('Pekerjaan Wali'),
-                        Forms\Components\Textarea::make('alamat_wali')->label('Alamat Wali'),
+                        Select::make('wali_id')
+    ->label('Wali (Guru)')
+    ->options(function (callable $get) {
+        $classroomId = $get('classroom_id');
+
+        if (!$classroomId) return [];
+
+        return \App\Models\Guru::whereHas('classrooms', fn ($q) =>
+            $q->where('classrooms.id', $classroomId)
+        )->pluck('name', 'id');
+    })
+    ->searchable()
+    ->preload()
+    ->disabled(fn (callable $get) => !$get('classroom_id'))
+    ->required(),
+                        TextInput::make('pekerjaan_wali')->label('Pekerjaan Wali'),
+                        Textarea::make('alamat_wali')->label('Alamat Wali'),
                         Toggle::make('status')
                             ->label('Aktif')
                             ->default(true),
@@ -81,7 +111,7 @@ class StudentResource extends Resource
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('nisn')->label('NISN'),
-                TextColumn::make('nama')->label('Nama') ->label('Nama')
+                TextColumn::make('nama')->label('Nama')->label('Nama')
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('jenis_kelamin')->label('L/P'),
@@ -90,7 +120,7 @@ class StudentResource extends Resource
                 TextColumn::make('agama')->label('Agama'),
                 TextColumn::make('pendidikan_sebelumnya')->label('Pendidikan Sebelumnya'),
                 TextColumn::make('alamat')->label('Alamat')->limit(30),
-                
+
                 TextColumn::make('nama_ayah')->label('Nama Ayah'),
                 TextColumn::make('pekerjaan_ayah')->label('Pekerjaan Ayah'),
                 TextColumn::make('nama_ibu')->label('Nama Ibu'),
@@ -100,7 +130,7 @@ class StudentResource extends Resource
                 TextColumn::make('kapanewon')->label('Kapanewon'),
                 TextColumn::make('kota')->label('Kab/Kota'),
                 TextColumn::make('provinsi')->label('Provinsi'),
-                
+
                 TextColumn::make('nama_wali')->label('Nama Wali'),
                 TextColumn::make('pekerjaan_wali')->label('Pekerjaan Wali'),
                 TextColumn::make('alamat_wali')->label('Alamat Wali')->limit(30),
@@ -114,15 +144,15 @@ class StudentResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('jenis_kelamin')
-                ->label('Jenis Kelamin')
-                ->options([
-                    'L' => 'Laki-laki',
-                    'P' => 'Perempuan',
-                ]),
+                    ->label('Jenis Kelamin')
+                    ->options([
+                        'L' => 'Laki-laki',
+                        'P' => 'Perempuan',
+                    ]),
 
                 Tables\Filters\SelectFilter::make('agama')
                     ->label('Agama')
-                    ->options(fn () => Student::query()
+                    ->options(fn() => Student::query()
                         ->distinct()
                         ->pluck('agama', 'agama')
                         ->filter()),
@@ -131,7 +161,7 @@ class StudentResource extends Resource
                     ->options([
                         1 => 'Aktif',
                         0 => 'Tidak Aktif',
-                ]),
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

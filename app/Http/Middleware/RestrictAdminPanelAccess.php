@@ -17,7 +17,7 @@ class RestrictAdminPanelAccess
     {
         $user = auth()->user();
 
-        if (! $user || ! $user->hasAnyRole(['admin', 'super_admin'])) {
+        if (! $user || ! $user->hasAnyRole(['admin', 'super_admin','guru'])) {
             abort(403, 'Akses ke panel admin tidak diizinkan.');
         }
 

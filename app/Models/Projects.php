@@ -32,4 +32,10 @@ class Projects extends Model
     {
         return $this->hasMany(ProjectScore::class);
     }
+
+    public function parameterPenilaian()
+    {
+        return $this->hasMany(ParameterPenilaian::class);
+    }
+
 }

@@ -12,7 +12,7 @@ class Student extends Model
         'nis', 'nisn', 'nama', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'agama',
         'pendidikan_sebelumnya', 'alamat', 'nama_ayah', 'pekerjaan_ayah',
         'nama_ibu', 'pekerjaan_ibu', 'jalan', 'kelurahan', 'kapanewon', 'kota', 'provinsi',
-        'nama_wali', 'pekerjaan_wali', 'alamat_wali', 'classroom_id',
+        'nama_wali', 'pekerjaan_wali', 'alamat_wali', 'classroom_id','wali_id',
         'status'
     ];
 
@@ -24,5 +24,15 @@ class Student extends Model
     public function projectScores(): HasMany
     {
         return $this->hasMany(ProjectScore::class);
+    }
+
+    public function projectScoreDetails()
+    {
+        return $this->hasMany(ProjectScoreDetail::class);
+    }
+
+    public function wali()
+    {
+        return $this->belongsTo(Guru::class, 'wali_id');
     }
 }

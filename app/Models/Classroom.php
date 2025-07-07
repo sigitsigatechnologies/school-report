@@ -17,4 +17,10 @@ class Classroom extends Model
     {
         return $this->hasMany(ProjectDescription::class);
     }
+
+    public function gurus()
+    {
+        return $this->belongsToMany(Guru::class, 'classroom_guru');
+    }
+
 }

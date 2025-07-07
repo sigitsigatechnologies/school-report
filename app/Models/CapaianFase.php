@@ -14,4 +14,14 @@ class CapaianFase extends Model
         return $this->belongsTo(SubElements::class, 'sub_element_id');
     }
 
+    public function projectDetail()
+    {
+        return $this->belongsTo(ProjectDetail::class);
+    }
+
+    public function element()
+    {
+        return $this->belongsTo(Elements::class, 'elemen_id');
+    }
+
 }

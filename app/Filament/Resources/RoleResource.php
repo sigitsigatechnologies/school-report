@@ -74,9 +74,9 @@ class RoleResource extends Resource
         ];
     }
 
-    // public static function canViewAny(): bool
-    // {
-    //     return auth()->user()?->hasRole('admin') || auth()->user()?->hasRole('admin');
-    // }
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasRole('super_admin') || auth()->user()?->hasRole('admin');
+    }
 
 }
