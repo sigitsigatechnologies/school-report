@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Classroom;
+use App\Models\ProjectScoreDetail;
 use App\Models\Student;
 use Filament\Tables\Actions\Action;
 use Filament\Forms;
@@ -36,21 +37,60 @@ class PrintProjectScores extends Page implements HasForms, HasTable
             ]);
     }
 
+    // public function table(Table $table): Table
+    // {
+    //     return $table
+    //         ->query(Student::query()->where('classroom_id', $this->selectedClassroom))
+    //         ->columns([
+    //             TextColumn::make('nama')->label('Nama Siswa'),
+    //             TextColumn::make('nisn')->label('NISN'),
+    //         ])
+    //         ->actions([
+    //             Action::make('cetak')
+    //                 ->label('Cetak PDF')
+    //                 ->url(fn($record) => route('print.project.score.student', $record->id))
+    //                 ->openUrlInNewTab()
+    //                 ->color('primary')
+    //                 ->icon('heroicon-o-printer'),
+    //         ]);
+    // }
+
     public function table(Table $table): Table
-    {
-        return $table
-            ->query(Student::query()->where('classroom_id', $this->selectedClassroom))
-            ->columns([
-                TextColumn::make('nama')->label('Nama Siswa'),
-                TextColumn::make('nisn')->label('NISN'),
-            ])
-            ->actions([
-                Action::make('cetak')
-                    ->label('Cetak PDF')
-                    ->url(fn($record) => route('print.project.score.student', $record->id))
-                    ->openUrlInNewTab()
-                    ->color('primary')
-                    ->icon('heroicon-o-printer'),
+{
+    return $table
+        ->query(Student::query()->where('classroom_id', $this->selectedClassroom))
+        ->columns([
+            TextColumn::make('nama')->label('Nama Siswa'),
+            TextColumn::make('nisn')->label('NISN'),
+        ])
+        ->actions([
+            Action::make('cetak')
+                ->label(function ($record) {
+                    return ProjectScoreDetail::where('student_id', $record->id)->exists()
+                        ? 'Cetak PDF'
+                        : 'Belum Ada Penilaian';
+                })
+                ->url(function ($record) {
+                    return ProjectScoreDetail::where('student_id', $record->id)->exists()
+                        ? route('print.project.score.student', $record->id)
+                        : null;
+                })
+                ->openUrlInNewTab(fn ($record) =>
+                    ProjectScoreDetail::where('student_id', $record->id)->exists()
+                )
+                ->disabled(fn ($record) =>
+                    !ProjectScoreDetail::where('student_id', $record->id)->exists()
+                )
+                ->color(fn ($record) =>
+                    ProjectScoreDetail::where('student_id', $record->id)->exists()
+                        ? 'primary'
+                        : 'gray'
+                )
+                ->icon(fn ($record) =>
+                    ProjectScoreDetail::where('student_id', $record->id)->exists()
+                        ? 'heroicon-o-printer'
+                        : 'heroicon-o-x-circle'
+                ),
             ]);
-    }
+}
 }
