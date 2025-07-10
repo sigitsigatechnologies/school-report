@@ -15,36 +15,36 @@ use Filament\Forms\Components\View;
 
 class PrintProjectScoreController extends Controller
 {
-    // public function student($project_score_id, $student_id)
-    // {
-    //     $score = ProjectScore::with([
-    //         'project.detail.header.classroom',
-    //     ])->findOrFail($project_score_id);
+    public function studentOne($project_score_id, $student_id)
+    {
+        $score = ProjectScore::with([
+            'project.detail.header.classroom',
+        ])->findOrFail($project_score_id);
 
-    //     $student = Student::with('classroom','wali')->findOrFail($student_id);
+        $student = Student::with('classroom','wali')->findOrFail($student_id);
 
-    //     // Ambil detail penilaian lengkap per sub capaian
-    //     $scoreDetails = ProjectScoreDetail::with([
-    //             'projectDetail.project',
-    //             'projectDetail',
-    //             'capaianFase.subElement.element.dimension',
-    //             'parameterPenilaian',
-    //         ])
-    //         ->where('project_score_id', $project_score_id)
-    //         ->where('student_id', $student_id)
-    //         ->get();
+        // Ambil detail penilaian lengkap per sub capaian
+        $scoreDetails = ProjectScoreDetail::with([
+                'projectDetail.project',
+                'projectDetail',
+                'capaianFase.subElement.element.dimension',
+                'parameterPenilaian',
+            ])
+            ->where('project_score_id', $project_score_id)
+            ->where('student_id', $student_id)
+            ->get();
 
-    //     // Dikelompokkan berdasarkan nama proyek
-    //     $groupedDetails = $scoreDetails->groupBy(function ($detail) {
-    //         return $detail->projectDetail->project->title_project ?? 'Tanpa Judul';
-    //     });
+        // Dikelompokkan berdasarkan nama proyek
+        $groupedDetails = $scoreDetails->groupBy(function ($detail) {
+            return $detail->projectDetail->project->title_project ?? 'Tanpa Judul';
+        });
 
-    //     return Pdf::loadView('print.project-score-student', [
-    //         'score' => $score,
-    //         'student' => $student,
-    //         'groupedDetails' => $groupedDetails,
-    //     ])->setPaper('A4', 'portrait')->stream("rapor-{$student->nama}.pdf");
-    // }
+        return Pdf::loadView('print.project-score-per-student', [
+            'score' => $score,
+            'student' => $student,
+            'groupedDetails' => $groupedDetails,
+        ])->setPaper('A4', 'portrait')->stream("rapor-{$student->nama}.pdf");
+    }
 
 
     public function student(Student $student)

@@ -23,8 +23,8 @@ Route::get('/project-scores/{id}/print', [PrintController::class, 'projectScore'
 Route::get('/project-scores/{id}/print/{student_id}', [\App\Http\Controllers\PrintController::class, 'studentScore'])
     ->name('print.project-score.student');
 
-Route::get('/print/project-score/{project_score_id}/student/{student_id}', [PrintProjectScoreController::class, 'student'])
-    ->name('print.project-score.student');
+Route::get('/print/project-score/{project_score_id}/student/{student_id}', [PrintProjectScoreController::class, 'studentOne'])
+    ->name('print.project-score.studentOne');
 
 Route::get('/print/project-score/{student}', [PrintProjectScoreController::class, 'student'])
     ->name('print.project.score.student');

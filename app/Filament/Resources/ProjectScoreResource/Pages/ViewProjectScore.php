@@ -127,7 +127,7 @@ class ViewProjectScore extends EditRecord
                                         Action::make("print_student_{$studentId}")
                                             ->label('Print Rapor')
                                             ->icon('heroicon-o-printer')
-                                            ->url(fn () => route('print.project-score.student', [
+                                            ->url(fn () => route('print.project-score.studentOne', [
                                                 'project_score_id' => $studentDetails->first()->project_score_id,
                                                 'student_id' => $studentId,
                                             ]))
