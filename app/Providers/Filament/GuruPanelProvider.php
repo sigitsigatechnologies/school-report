@@ -31,14 +31,14 @@ class GuruPanelProvider extends PanelProvider
             ->id('guru')
             ->path('guru')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Stone,
             ])
             // ->discoverResources(in: app_path('Filament/Guru/Resources'), for: 'App\\Filament\\Guru\\Resources')
-            ->resources([
-                GuruResource::class,
-                StudentResource::class,
-                ProjectsResource::class,
-            ])
+            // ->resources([
+            //     GuruResource::class,
+            //     StudentResource::class,
+            //     ProjectsResource::class,
+            // ])
             ->discoverPages(in: app_path('Filament/Guru/Pages'), for: 'App\\Filament\\Guru\\Pages')
             ->pages([
                 Pages\Dashboard::class,

@@ -145,7 +145,10 @@ return [
     Illuminate\Session\SessionServiceProvider::class,
     Illuminate\Translation\TranslationServiceProvider::class,
     Illuminate\Validation\ValidationServiceProvider::class,
-    Illuminate\View\ViewServiceProvider::class, // <- penting!
+    Illuminate\View\ViewServiceProvider::class,
+    App\Providers\Filament\EraporPanelProvider::class,
+    App\Providers\Filament\GuruPanelProvider::class,
+    App\Providers\Filament\UserPanelProvider::class,
 
     /*
     * Application Service Providers...

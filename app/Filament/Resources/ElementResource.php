@@ -19,7 +19,7 @@ class ElementResource extends Resource
 {
     protected static ?string $model = Elements::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
     protected static ?string $navigationLabel = 'Parameter Element';
     protected static ?string $pluralModelLabel = 'Parameter Element';
     protected static ?string $navigationGroup = 'Parameter';

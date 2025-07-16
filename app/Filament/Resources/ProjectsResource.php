@@ -23,6 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class ProjectsResource extends Resource
 {
@@ -39,7 +40,7 @@ class ProjectsResource extends Resource
         return $form
             ->schema([
                 TextInput::make('title_project')
-                    ->label('Judul Proyek')
+                    ->label('Nama Proyek untuk Penilaian')
                     ->required(),
 
                 TextInput::make('fase')
@@ -51,72 +52,112 @@ class ProjectsResource extends Resource
                     ->label('Kelas')
                     ->disabled()
                     ->dehydrated(false),
+                // Select::make('project_description_detail_id')
+                //     ->label('Pilih Judul Proyek dari Deskripsi')
+                //     ->options(ProjectDescriptionDetails::all()->pluck('title', 'id'))
+                //     ->searchable()
+                //     ->reactive()
+                //     ->afterStateUpdated(function (callable $set, $state) {
+                //         $detail = \App\Models\ProjectDescriptionDetails::with('header.classroom')->find($state);
+
+                //         $set('fase', $detail?->header?->fase);
+                //         $set('classroom', $detail?->header?->classroom?->name);
+                //     })
+                //     ->afterStateHydrated(function (callable $get, callable $set) {
+                //         $state = $get('project_description_detail_id');
+
+                //         $detail = \App\Models\ProjectDescriptionDetails::with('header.classroom')->find($state);
+
+                //         $set('fase', $detail?->header?->fase);
+                //         $set('classroom', $detail?->header?->classroom?->name);
+                //     }),
+
                 Select::make('project_description_detail_id')
                     ->label('Pilih Judul Proyek dari Deskripsi')
-                    ->options(ProjectDescriptionDetails::all()->pluck('title', 'id'))
+                    ->options(function () {
+                        $user = auth()->user();
+
+                        // Admin / operator => lihat semua
+                        if (! $user->hasRole('guru')) {
+                            return \App\Models\ProjectDescriptionDetails::with('header')
+                                ->get()
+                                ->pluck('title', 'id');
+                        }
+
+                        // Guru => hanya deskripsi milik kelas yang dia ampu
+                        $classroomIds = $user->guru->classrooms->pluck('id');
+
+                        return \App\Models\ProjectDescriptionDetails::whereHas(
+                            'header',
+                            fn($q) =>
+                            $q->whereIn('classroom_id', $classroomIds)
+                        )
+                            ->pluck('title', 'id');
+                    })
                     ->searchable()
+                    ->required()
                     ->reactive()
                     ->afterStateUpdated(function (callable $set, $state) {
                         $detail = \App\Models\ProjectDescriptionDetails::with('header.classroom')->find($state);
-                
                         $set('fase', $detail?->header?->fase);
                         $set('classroom', $detail?->header?->classroom?->name);
                     })
                     ->afterStateHydrated(function (callable $get, callable $set) {
-                        $state = $get('project_description_detail_id');
-                
-                        $detail = \App\Models\ProjectDescriptionDetails::with('header.classroom')->find($state);
-                
+                        $detail = \App\Models\ProjectDescriptionDetails::with('header.classroom')
+                            ->find($get('project_description_detail_id'));
                         $set('fase', $detail?->header?->fase);
                         $set('classroom', $detail?->header?->classroom?->name);
                     }),
-                    
-                    Repeater::make('projectDetails')
-                        ->label('Detail Proyek')
-                        ->relationship('projectDetails')
-                        ->schema([
-                            Grid::make(12)->schema([
-                                Select::make('dimension_id')
-                                    ->label('Dimensi')
-                                    ->options(Dimension::all()->pluck('name', 'id'))
-                                    ->reactive()
-                                    ->afterStateUpdated(fn ($state, callable $set) => $set('element_id', null))
-                                    ->required()
-                                    ->columnSpan(3),
 
-                                Select::make('element_id')
-                                    ->label('Elemen')
-                                    ->options(fn (callable $get) =>
-                                        \App\Models\Elements::where('dimension_id', $get('dimension_id'))->pluck('name', 'id')
-                                    )
-                                    ->reactive()
-                                    ->afterStateUpdated(fn ($state, callable $set) => $set('sub_element_id', null))
-                                    ->required()
-                                    ->columnSpan(3),
+                Repeater::make('projectDetails')
+                    ->label('Detail Proyek')
+                    ->relationship('projectDetails')
+                    ->schema([
+                        Grid::make(12)->schema([
+                            Select::make('dimension_id')
+                                ->label('Dimensi')
+                                ->options(Dimension::all()->pluck('name', 'id'))
+                                ->reactive()
+                                ->afterStateUpdated(fn($state, callable $set) => $set('element_id', null))
+                                ->required()
+                                ->columnSpan(3),
 
-                                Select::make('sub_element_id')
-                                    ->label('Sub Elemen')
-                                    ->options(fn (callable $get) =>
-                                        \App\Models\SubElements::where('element_id', $get('element_id'))->pluck('name', 'id')
-                                    )
-                                    ->reactive()
-                                    ->afterStateUpdated(fn ($state, callable $set) => $set('capaian_fase_id', null))
-                                    ->required()
-                                    ->columnSpan(3),
+                            Select::make('element_id')
+                                ->label('Elemen')
+                                ->options(
+                                    fn(callable $get) =>
+                                    \App\Models\Elements::where('dimension_id', $get('dimension_id'))->pluck('name', 'id')
+                                )
+                                ->reactive()
+                                ->afterStateUpdated(fn($state, callable $set) => $set('sub_element_id', null))
+                                ->required()
+                                ->columnSpan(3),
 
-                                Select::make('capaian_fase_id')
-                                    ->label('Capaian Fase')
-                                    ->options(fn (callable $get) =>
-                                        \App\Models\CapaianFase::where('sub_element_id', $get('sub_element_id'))->pluck('description', 'id')
-                                    )
-                                    ->required()
-                                    ->columnSpan(3),
-                            ]),
-                        ])
-                        ->columns(1)
-                        ->minItems(1)
-                        ->columnSpanFull()
-                        ->createItemButtonLabel('Tambah Detail'),
+                            Select::make('sub_element_id')
+                                ->label('Sub Elemen')
+                                ->options(
+                                    fn(callable $get) =>
+                                    \App\Models\SubElements::where('element_id', $get('element_id'))->pluck('name', 'id')
+                                )
+                                ->reactive()
+                                ->afterStateUpdated(fn($state, callable $set) => $set('capaian_fase_id', null))
+                                ->required()
+                                ->columnSpan(3),
+
+                            Select::make('capaian_fase_id')
+                                ->label('Capaian Fase')
+                                ->options(
+                                    fn(callable $get) =>
+                                    \App\Models\CapaianFase::where('sub_element_id', $get('sub_element_id'))->pluck('description', 'id')
+                                )
+                                ->required()
+                                ->columnSpan(3),
+                        ]),
+                    ])
+                    ->columns(1)
+                    ->minItems(1)
+                    ->columnSpanFull()
+                    ->createItemButtonLabel('Tambah Detail'),
 
 
                 // Select::make('project_description_detail_id')
@@ -151,6 +192,26 @@ class ProjectsResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = Auth::user();
+
+        if ($user->hasRole('guru')) {
+            $classroomIds = $user->guru->classrooms->pluck('id');
+
+            // Project → detail → header → classroom_id
+            $query->whereHas(
+                'detail.header',
+                fn($q) =>
+                $q->whereIn('classroom_id', $classroomIds)
+            );
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array

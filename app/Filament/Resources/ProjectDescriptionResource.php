@@ -7,11 +7,17 @@ use App\Filament\Resources\ProjectDescriptionResource\RelationManagers;
 use App\Models\ProjectDescription;
 use App\Models\ProjectDescriptions;
 use Filament\Forms;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class ProjectDescriptionResource extends Resource
 {
@@ -27,16 +33,25 @@ class ProjectDescriptionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('classroom_id')
-                ->label('Kelas')
-                ->relationship('classroom', 'name')
-                ->required(),
+                Select::make('classroom_id')
+                    ->label('Kelas')
+                    ->required()
+                    ->options(function () {
+                        $user = auth()->user();
 
-                Forms\Components\TextInput::make('header_name_project')
+                        if ($user->hasRole('guru')) {
+                            return $user->guru->classrooms->pluck('name', 'id');
+                        }
+
+                        return \App\Models\Classroom::pluck('name', 'id');
+                    }),
+
+
+                TextInput::make('header_name_project')
                     ->label('Judul Proyek Utama')
                     ->required(),
 
-                Forms\Components\Select::make('fase')
+                Select::make('fase')
                     ->options([
                         'A' => 'Fase A',
                         'B' => 'Fase B',
@@ -46,20 +61,20 @@ class ProjectDescriptionResource extends Resource
                     ])
                     ->required(),
 
-                Forms\Components\TextInput::make('tahun_ajaran')
+                TextInput::make('tahun_ajaran')
                     ->label('Tahun Ajaran')
                     ->required(),
 
                 // Detail repeater
-                    Forms\Components\Repeater::make('details')
-                        ->relationship('details')
-                        ->schema([
-                            Forms\Components\TextInput::make('title')->required(),
-                            Forms\Components\Textarea::make('description')->required(),
-                        ])
-                        ->minItems(1)
-                        ->columns(1)
-                        ->columnSpanFull()
+                Repeater::make('details')
+                    ->relationship('details')
+                    ->schema([
+                        TextInput::make('title')->required(),
+                        Textarea::make('description')->required(),
+                    ])
+                    ->minItems(1)
+                    ->columns(1)
+                    ->columnSpanFull()
 
             ]);
     }
@@ -85,6 +100,23 @@ class ProjectDescriptionResource extends Resource
                 ]),
             ]);
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = Auth::user();
+
+        if ($user->hasRole('guru')) {
+            $guru = $user->guru;
+            $classroomIds = $guru->classrooms->pluck('id');
+
+            $query->whereIn('classroom_id', $classroomIds);
+        }
+
+        return $query;
+    }
+
 
     public static function getRelations(): array
     {

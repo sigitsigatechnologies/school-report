@@ -3,8 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Widgets\WelcomeWidget;
-use App\Filament\Widgets\WelcomeWidgetP5;
-use App\Http\Middleware\RestrictAdminPanelAccess;
+use App\Filament\Widgets\WelcomeWidgetErapor;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -21,42 +20,30 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-
-class AdminPanelProvider extends PanelProvider
+class EraporPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
-            ->id('p5')
-            ->path('p5')
+            ->id('erapor')
+            ->path('erapor')
             ->login()
             ->colors([
-                'primary' => Color::Green,
+                'primary' => Color::Red,
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            // ->resources([
-            //     GuruResource::class,
-            //     StudentResource::class,
-            //     ProjectsResource::class,
-            //     UserResource::class,
-            //     ProjectScoreResource::class
-            // ])
-            
-            ->brandName('SD BOPKRI TUREN') // ubah teks "Laravel"
-            ->brandName('e-Rapor P5')
-            ->favicon(asset('favicon.ico'))
-            // ->brandLogo(asset('images/logo_bopkri.png')) // pasang logo sendiri (ukuran kecil misalnya 32x32px)
-            // ->brandLogoHeight('3rem')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->discoverResources(in: app_path('Filament/Erapor/Resources'), for: 'App\\Filament\\Erapor\\Resources')
+            ->discoverPages(in: app_path('Filament/Erapor/Pages'), for: 'App\\Filament\\Erapor\\Pages')
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Erapor/Widgets'), for: 'App\\Filament\\Erapor\\Widgets')
             ->widgets([
                 // Widgets\AccountWidget::class,
+                // Widgets\FilamentInfoWidget::class,
                 WelcomeWidget::class,
             ])
+            ->brandName('e-Rapor Assesstment')
+            ->favicon(asset('favicon.ico'))
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -68,10 +55,8 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            
             ->authMiddleware([
                 Authenticate::class,
-                RestrictAdminPanelAccess::class
             ]);
     }
 }

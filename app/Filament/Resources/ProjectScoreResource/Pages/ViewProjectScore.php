@@ -52,17 +52,17 @@ class ViewProjectScore extends EditRecord
                 ])
                 ->columns(2),
 
-                Section::make('Detail Nilai Siswa')
+            Section::make('Detail Nilai Siswa')
                 ->schema(
                     $groupedDetails->map(function ($studentDetails, $studentId) {
                         $student = $studentDetails->first()->student;
                         $firstDetail = $studentDetails->first();
-            
+
                         $capaianLabels = $studentDetails->map(function ($detail) {
                             $bobot = $detail->parameterPenilaian->bobot ?? '-';
                             $keterangan = $detail->parameterPenilaian->keterangan ?? '-';
                             $deskripsi = $detail->capaianFase->description ?? '-';
-            
+
                             $style = match ($bobot) {
                                 'SB' => "background-color: #d1fae5; color: #065f46;",
                                 'BSH' => "background-color: #bfdbfe; color: #1e40af;",
@@ -70,7 +70,7 @@ class ViewProjectScore extends EditRecord
                                 'BB' => "background-color: #fecaca; color: #991b1b;",
                                 default => "background-color: #e5e7eb; color: #374151;",
                             };
-            
+
                             return "<li style='margin-bottom: 6px;'>
                                 <div style='margin-bottom: 2px; font-weight: 600;'>{$deskripsi}</div>
                                 <span style='padding: 4px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; {$style}'>
@@ -78,9 +78,9 @@ class ViewProjectScore extends EditRecord
                                 </span>
                             </li>";
                         })->implode('');
-            
+
                         $capaianLabels = "<ul style='padding-left: 16px; margin: 0;'>{$capaianLabels}</ul>";
-            
+
                         return Section::make("Data Siswa: {$student->nama}")
                             ->description("Berikut detail capaian dan catatan untuk {$student->nama}")
                             ->schema([
@@ -88,17 +88,17 @@ class ViewProjectScore extends EditRecord
                                     Placeholder::make("student_{$studentId}")
                                         ->label('Nama Siswa')
                                         ->content($student->nama),
-            
+
                                     Placeholder::make("capaian_list_{$studentId}")
                                         ->label('Capaian + Nilai')
                                         ->content(new \Illuminate\Support\HtmlString($capaianLabels))
                                         ->columnSpan(3),
-            
+
                                     Placeholder::make("note_{$studentId}")
                                         ->label('Catatan')
                                         ->content($firstDetail->note_project ?? '-')
                                         ->columnSpan(2),
-            
+
                                     Actions::make([
                                         Action::make("edit_note_{$studentId}")
                                             ->icon('heroicon-o-pencil-square')
@@ -112,13 +112,13 @@ class ViewProjectScore extends EditRecord
                                             ->modalSubmitActionLabel('Simpan')
                                             ->action(function (array $data) use ($studentId, $studentDetails) {
                                                 $projectScoreId = $studentDetails->first()->project_score_id;
-            
+
                                                 \App\Models\ProjectScoreDetail::where('project_score_id', $projectScoreId)
                                                     ->where('student_id', $studentId)
                                                     ->update([
                                                         'note_project' => $data['noteValue'],
                                                     ]);
-            
+
                                                 \Filament\Notifications\Notification::make()
                                                     ->title('Catatan berhasil diperbarui untuk semua capaian siswa ini.')
                                                     ->success()
@@ -127,7 +127,7 @@ class ViewProjectScore extends EditRecord
                                         Action::make("print_student_{$studentId}")
                                             ->label('Print Rapor')
                                             ->icon('heroicon-o-printer')
-                                            ->url(fn () => route('print.project-score.studentOne', [
+                                            ->url(fn() => route('print.project-score.studentOne', [
                                                 'project_score_id' => $studentDetails->first()->project_score_id,
                                                 'student_id' => $studentId,
                                             ]))
@@ -139,7 +139,7 @@ class ViewProjectScore extends EditRecord
                                 ]),
                             ]);
                     })->values()->toArray()
-                )            
+                )
 
         ]);
     }
@@ -176,22 +176,20 @@ class ViewProjectScore extends EditRecord
         return []; // Tidak ada tombol Save di bawah form
     }
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            HeaderAction::make('print')
-                ->label('Print')
-                ->icon('heroicon-o-printer')
-                ->color('gray')
-                ->url(fn() => route('print.project-score', ['id' => $this->record->id]))
-                ->openUrlInNewTab(), // Agar tidak menutup halaman ini
-        ];
-    }
+    // protected function getHeaderActions(): array
+    // {
+    //     return [
+    //         HeaderAction::make('print')
+    //             ->label('Print')
+    //             ->icon('heroicon-o-printer')
+    //             ->color('gray')
+    //             ->url(fn() => route('print.project-score', ['id' => $this->record->id]))
+    //             ->openUrlInNewTab(), // Agar tidak menutup halaman ini
+    //     ];
+    // }
 
     public function getTitle(): string
     {
         return 'Lihat Detail Project Penilaian dan Tambahkan Catatan.';
     }
-
-    
 }

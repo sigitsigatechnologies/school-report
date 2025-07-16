@@ -23,4 +23,10 @@ class Classroom extends Model
         return $this->belongsToMany(Guru::class, 'classroom_guru');
     }
 
+    public function masterMateris()
+    {
+        return $this->hasMany(MasterMateri::class);
+    }
+
+
 }

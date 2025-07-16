@@ -13,7 +13,7 @@ class ClassroomPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['guru', 'super_admin']);
+        return $user->hasAnyRole(['super_admin', 'admin']);
     }
 
     /**
@@ -21,7 +21,7 @@ class ClassroomPolicy
      */
     public function view(User $user, Classroom $classroom): bool
     {
-        return $user->hasAnyRole(['guru', 'super_admin']);
+        return $user->hasAnyRole(['guru', 'super_admin', 'admin']);
     }
 
     /**
@@ -29,7 +29,7 @@ class ClassroomPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyRole('guru','super_admin');
+        return $user->hasAnyRole('guru','super_admin', 'admin');
     }
 
     /**
@@ -37,7 +37,7 @@ class ClassroomPolicy
      */
     public function update(User $user, Classroom $classroom): bool
     {
-        return $user->hasAnyRole('guru','super_admin');
+        return $user->hasAnyRole('guru','super_admin', 'admin');
     }
 
     /**
@@ -45,7 +45,7 @@ class ClassroomPolicy
      */
     public function delete(User $user, Classroom $classroom): bool
     {
-        return $user->hasAnyRole('guru','super_admin');
+        return $user->hasAnyRole('guru','super_admin', 'admin');
     }
 
     /**
@@ -53,7 +53,7 @@ class ClassroomPolicy
      */
     public function restore(User $user, Classroom $classroom): bool
     {
-        return $user->hasRole('guru','super_admin');
+        return $user->hasRole('guru','super_admin', 'admin');
     }
 
     /**

@@ -18,7 +18,7 @@ class ParameterPenilaianResource extends Resource
 {
     protected static ?string $model = ParameterPenilaian::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
 
     protected static ?string $navigationLabel = 'Parameter Penilaian';
     protected static ?string $pluralModelLabel = 'Parameter Penilaian';

@@ -30,10 +30,22 @@ class PrintProjectScores extends Page implements HasForms, HasTable
             ->schema([
                 Select::make('selectedClassroom')
                     ->label('Pilih Kelas')
-                    ->options(Classroom::all()->pluck('name', 'id'))
+                    ->options(function () {
+                        $user = auth()->user();
+
+                        // Jika guru, tampilkan hanya kelas yang dia ampu
+                        if ($user->hasRole('guru')) {
+                            return $user->guru
+                                ? $user->guru->classrooms->pluck('name', 'id')
+                                : [];
+                        }
+
+                        // Jika admin/operator, tampilkan semua kelas
+                        return Classroom::all()->pluck('name', 'id');
+                    })
                     ->searchable()
                     ->reactive()
-                    ->afterStateUpdated(fn() => $this->resetTable()), // reload table
+                    ->afterStateUpdated(fn() => $this->resetTable()),
             ]);
     }
 
@@ -56,41 +68,45 @@ class PrintProjectScores extends Page implements HasForms, HasTable
     // }
 
     public function table(Table $table): Table
-{
-    return $table
-        ->query(Student::query()->where('classroom_id', $this->selectedClassroom))
-        ->columns([
-            TextColumn::make('nama')->label('Nama Siswa'),
-            TextColumn::make('nisn')->label('NISN'),
-        ])
-        ->actions([
-            Action::make('cetak')
-                ->label(function ($record) {
-                    return ProjectScoreDetail::where('student_id', $record->id)->exists()
-                        ? 'Cetak PDF'
-                        : 'Belum Ada Penilaian';
-                })
-                ->url(function ($record) {
-                    return ProjectScoreDetail::where('student_id', $record->id)->exists()
-                        ? route('print.project.score.student', $record->id)
-                        : null;
-                })
-                ->openUrlInNewTab(fn ($record) =>
-                    ProjectScoreDetail::where('student_id', $record->id)->exists()
-                )
-                ->disabled(fn ($record) =>
-                    !ProjectScoreDetail::where('student_id', $record->id)->exists()
-                )
-                ->color(fn ($record) =>
-                    ProjectScoreDetail::where('student_id', $record->id)->exists()
-                        ? 'primary'
-                        : 'gray'
-                )
-                ->icon(fn ($record) =>
-                    ProjectScoreDetail::where('student_id', $record->id)->exists()
-                        ? 'heroicon-o-printer'
-                        : 'heroicon-o-x-circle'
-                ),
+    {
+        return $table
+            ->query(Student::query()->where('classroom_id', $this->selectedClassroom))
+            ->columns([
+                TextColumn::make('nama')->label('Nama Siswa'),
+                TextColumn::make('nisn')->label('NISN'),
+            ])
+            ->actions([
+                Action::make('cetak')
+                    ->label(function ($record) {
+                        return ProjectScoreDetail::where('student_id', $record->id)->exists()
+                            ? 'Cetak PDF'
+                            : 'Belum Ada Penilaian';
+                    })
+                    ->url(function ($record) {
+                        return ProjectScoreDetail::where('student_id', $record->id)->exists()
+                            ? route('print.project.score.student', $record->id)
+                            : null;
+                    })
+                    ->openUrlInNewTab(
+                        fn($record) =>
+                        ProjectScoreDetail::where('student_id', $record->id)->exists()
+                    )
+                    ->disabled(
+                        fn($record) =>
+                        !ProjectScoreDetail::where('student_id', $record->id)->exists()
+                    )
+                    ->color(
+                        fn($record) =>
+                        ProjectScoreDetail::where('student_id', $record->id)->exists()
+                            ? 'primary'
+                            : 'gray'
+                    )
+                    ->icon(
+                        fn($record) =>
+                        ProjectScoreDetail::where('student_id', $record->id)->exists()
+                            ? 'heroicon-o-printer'
+                            : 'heroicon-o-x-circle'
+                    ),
             ]);
-}
+    }
 }

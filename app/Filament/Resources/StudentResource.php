@@ -21,6 +21,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class StudentResource extends Resource
 {
@@ -57,9 +58,17 @@ class StudentResource extends Resource
                         Textarea::make('alamat')->label('Alamat Peserta Didik')->columnSpanFull(),
                         Select::make('classroom_id')
                             ->label('Kelas')
-                            ->relationship('classroom', 'name')
+                            ->options(function () {
+                                $user = auth()->user();
+
+                                if ($user->hasRole('guru')) {
+                                    return $user->guru->classrooms->pluck('name', 'id');
+                                }
+
+                                return \App\Models\Classroom::pluck('name', 'id');
+                            })
                             ->required()
-                            ->reactive(), 
+                            ->reactive()
                     ]),
 
                 Section::make('Orang Tua')
@@ -79,20 +88,22 @@ class StudentResource extends Resource
                 Section::make('Wali Peserta Didik')
                     ->schema([
                         Select::make('wali_id')
-    ->label('Wali (Guru)')
-    ->options(function (callable $get) {
-        $classroomId = $get('classroom_id');
+                            ->label('Wali (Guru)')
+                            ->options(function (callable $get) {
+                                $classroomId = $get('classroom_id');
 
-        if (!$classroomId) return [];
+                                if (!$classroomId) return [];
 
-        return \App\Models\Guru::whereHas('classrooms', fn ($q) =>
-            $q->where('classrooms.id', $classroomId)
-        )->pluck('name', 'id');
-    })
-    ->searchable()
-    ->preload()
-    ->disabled(fn (callable $get) => !$get('classroom_id'))
-    ->required(),
+                                return \App\Models\Guru::whereHas(
+                                    'classrooms',
+                                    fn($q) =>
+                                    $q->where('classrooms.id', $classroomId)
+                                )->pluck('name', 'id');
+                            })
+                            ->searchable()
+                            ->preload()
+                            ->disabled(fn(callable $get) => !$get('classroom_id'))
+                            ->required(),
                         TextInput::make('pekerjaan_wali')->label('Pekerjaan Wali'),
                         Textarea::make('alamat_wali')->label('Alamat Wali'),
                         Toggle::make('status')
@@ -112,6 +123,10 @@ class StudentResource extends Resource
                     ->searchable(),
                 TextColumn::make('nisn')->label('NISN'),
                 TextColumn::make('nama')->label('Nama')->label('Nama')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('classroom.name')
+                    ->label('Kelas')
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('jenis_kelamin')->label('L/P'),
@@ -171,6 +186,22 @@ class StudentResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = Auth::user();
+
+        if ($user->hasRole('guru')) {
+            $guru = $user->guru; // pastikan relasi `guru` ada di model User
+            $classroomIds = $guru->classrooms->pluck('id');
+
+            $query->whereIn('classroom_id', $classroomIds);
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array

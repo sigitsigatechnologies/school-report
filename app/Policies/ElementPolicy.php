@@ -14,7 +14,7 @@ class ElementPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['guru', 'super_admin']);
+        return $user->hasAnyRole(['guru', 'super_admin', 'admin']);
     }
 
     /**
@@ -22,7 +22,7 @@ class ElementPolicy
      */
     public function view(User $user, Elements $element): bool
     {
-        return $user->hasAnyRole(['guru', 'super_admin']);
+        return $user->hasAnyRole(['guru', 'super_admin', 'admin']);
     }
 
     /**
@@ -30,7 +30,7 @@ class ElementPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyRole('guru','super_admin');
+        return $user->hasAnyRole('guru','super_admin', 'admin');
     }
 
     /**
@@ -38,7 +38,7 @@ class ElementPolicy
      */
     public function update(User $user, Elements $element): bool
     {
-        return $user->hasAnyRole('guru','super_admin');
+        return $user->hasAnyRole('guru','super_admin', 'admin');
     }
 
     /**
@@ -46,7 +46,7 @@ class ElementPolicy
      */
     public function delete(User $user, Elements $element): bool
     {
-        return $user->hasAnyRole('guru','super_admin');
+        return $user->hasAnyRole('guru','super_admin', 'admin');
     }
 
     /**
@@ -54,7 +54,7 @@ class ElementPolicy
      */
     public function restore(User $user, Elements $element): bool
     {
-        return $user->hasRole('guru','super_admin');
+        return $user->hasRole('guru','super_admin', 'admin');
     }
 
     /**

@@ -39,6 +39,4 @@ class Guru extends Model
     {
         return $this->hasMany(Student::class, 'wali_id');
     }
-
-
 }

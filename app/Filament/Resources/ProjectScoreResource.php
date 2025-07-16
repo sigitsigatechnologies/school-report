@@ -10,12 +10,8 @@ use App\Models\Projects;
 use App\Models\ProjectScore;
 use App\Models\ProjectScoreDetail;
 use App\Models\Student;
-use Filament\Forms;
-use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -23,9 +19,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Nette\Utils\Html;
 
 class ProjectScoreResource extends Resource
 {
@@ -39,7 +34,32 @@ class ProjectScoreResource extends Resource
             ->schema([
 
                 Select::make('project_id')
-                    ->relationship('project', 'title_project')
+                    ->label('Proyek')
+                    ->options(function () {
+                        $user = auth()->user();
+                        $guru = $user->guru ?? null;
+                        Log::error("data login", auth()->user()->toArray());
+
+                        Log::error("data guru", $user->guru->toArray());
+
+                        if (!$guru) {
+                            // Handle error gracefully, atau redirect / abort
+                            abort(403, 'Anda tidak terdaftar sebagai guru.');
+                        }
+
+                        // Kalau bukan guru (misal admin), tampilkan semua
+                        if (!$user->hasRole('guru')) {
+                            return \App\Models\Projects::pluck('title_project', 'id');
+                        }
+
+                        // Ambil classroom yang dia ampu
+                        $guru = $user->guru;
+                        $classroomIds = $guru->classrooms->pluck('id');
+
+                        return \App\Models\Projects::whereHas('detail.header', function ($query) use ($classroomIds) {
+                            $query->whereIn('classroom_id', $classroomIds);
+                        })->pluck('title_project', 'id');
+                    })
                     ->searchable()
                     ->required()
                     ->reactive()
@@ -255,6 +275,26 @@ class ProjectScoreResource extends Resource
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+
+        if ($user->hasRole('guru')) {
+            $guru = $user->guru;
+            $classroomIds = $guru->classrooms->pluck('id');
+
+            // Filter berdasarkan kelas yang dia ampu
+            $query->whereHas('project.detail.header', function ($q) use ($classroomIds) {
+                $q->whereIn('classroom_id', $classroomIds);
+            });
+        }
+
+        return $query;
+    }
+
 
     public static function getPages(): array
     {

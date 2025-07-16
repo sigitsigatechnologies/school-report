@@ -29,7 +29,7 @@ class DimensionPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole('super_admin');
+        return $user->hasAnyRole('guru','super_admin');
     }
 
     /**

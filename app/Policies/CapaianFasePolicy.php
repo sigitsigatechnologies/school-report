@@ -13,7 +13,7 @@ class CapaianFasePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['guru', 'super_admin']);
+        return $user->hasAnyRole(['guru', 'super_admin','admin']);
     }
 
     /**
@@ -21,7 +21,7 @@ class CapaianFasePolicy
      */
     public function view(User $user, CapaianFase $capaianFase): bool
     {
-        return $user->hasAnyRole(['guru', 'super_admin']);
+        return $user->hasAnyRole(['guru', 'super_admin'],'admin');
     }
 
     /**
@@ -29,7 +29,7 @@ class CapaianFasePolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['guru', 'super_admin']);
+        return $user->hasAnyRole(['guru', 'super_admin','admin']);
     }
 
     /**
@@ -37,7 +37,7 @@ class CapaianFasePolicy
      */
     public function update(User $user, CapaianFase $capaianFase): bool
     {
-        return $user->hasAnyRole(['guru', 'super_admin']);
+        return $user->hasAnyRole(['guru', 'super_admin','admin']);
     }
 
     /**
@@ -45,7 +45,7 @@ class CapaianFasePolicy
      */
     public function delete(User $user, CapaianFase $capaianFase): bool
     {
-        return $user->hasAnyRole(['guru', 'super_admin']);
+        return $user->hasAnyRole(['guru', 'super_admin','admin']);
     }
 
     /**
