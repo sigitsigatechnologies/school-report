@@ -19,5 +19,10 @@ class MasterUnitMateri extends Model
         return $this->hasMany(MasterTp::class);
     }
 
+    public function penilaianSumatifDetails()
+{
+    return $this->belongsTo(PenilaianSumatifDetail::class, 'master_unit_materi_id');
+}
+
 
 }

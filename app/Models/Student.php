@@ -35,4 +35,20 @@ class Student extends Model
     {
         return $this->belongsTo(Guru::class, 'wali_id');
     }
+
+    public function penilaianFormatifDetails()
+    {
+        return $this->hasMany(PenilaianFormatifDetail::class);
+    }
+
+    public function penilaianSumatif()
+    {
+        return $this->hasOne(PenilaianSumatif::class);
+    }
+
+    public function penilaianSumatifDetails()
+    {
+        return $this->hasMany(PenilaianSumatifDetail::class);
+    }
+
 }

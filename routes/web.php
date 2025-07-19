@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Guru\DashboardController;
 use App\Http\Controllers\PrintController;
+use App\Http\Controllers\PrintNilaiSumatifController;
 use App\Http\Controllers\PrintProjectScoreController;
 use App\Http\Controllers\ProjectNoteController;
 use Illuminate\Support\Facades\Route;
@@ -10,11 +10,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('lending.index');
 });
-
-// Route::middleware(['auth', 'role:guru'])->group(function () {
-//     Route::get('/dashboard-guru', [DashboardController::class, 'index'])->name('dashboard.guru');
-// });
-
 
 Route::get('/login', function () {
     return redirect('/admin/login'); // atau redirect ke panel login sesuai kebutuhanmu
@@ -29,6 +24,3 @@ Route::get('/print/project-score/{project_score_id}/student/{student_id}', [Prin
 
 Route::get('/print/project-score/{student}', [PrintProjectScoreController::class, 'student'])
     ->name('print.project.score.student');
-
-
-
