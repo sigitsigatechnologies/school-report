@@ -8,6 +8,7 @@ class ExtraKurikuler extends Model
 {
     protected $fillable = [
         'name',
+        'academic_year_id',
         'status',
     ];
 
@@ -20,4 +21,17 @@ class ExtraKurikuler extends Model
     {
         return $query->where('status', 'active');
     }
+
+    public function academicYear()
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
+
+    public function studentClassrooms()
+    {
+        return $this->belongsToMany(StudentClassroom::class, 'student_extracurriculars')
+                    ->withPivot('deskripsi', 'urutan')
+                    ->withTimestamps();
+    }
+
 }

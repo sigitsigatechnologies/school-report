@@ -14,3 +14,20 @@
         </label>
     @endforeach
 </div>
+
+{{-- @props(['name', 'value' => null, 'options' => [], 'readonly' => false]) --}}
+
+{{-- <div class="flex gap-1 justify-center"> --}}
+    {{-- @foreach ($options as $optionValue => $label) --}}
+        {{-- <label class="flex items-center space-x-1"> --}}
+            {{-- <input 
+                type="radio"
+                name="{{ $name }}"
+                wire:model.defer="data.{{ $name }}" {{-- PENTING --}}
+                {{-- value="{{ $optionValue }}" --}}
+                {{-- @if($readonly) disabled @endif --}}
+            {{-- >
+            <span class="text-xs">{{ $label }}</span>
+        </label> --}}
+    {{-- @endforeach --}}
+{{-- </div> --}}

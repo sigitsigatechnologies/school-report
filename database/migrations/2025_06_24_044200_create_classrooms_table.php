@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('classrooms', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Contoh: "VII A", "VII B"
-            $table->string('title')->nullable(); // Misal: Fase D
+            $table->string('name');
+            $table->foreignId('academic_year_id')->constrained('academic_years')->cascadeOnDelete();
             $table->timestamps();
         });
     }

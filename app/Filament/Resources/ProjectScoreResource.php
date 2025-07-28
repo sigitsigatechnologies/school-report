@@ -10,17 +10,24 @@ use App\Models\Projects;
 use App\Models\ProjectScore;
 use App\Models\ProjectScoreDetail;
 use App\Models\Student;
+use Filament\Forms;
+use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Nette\Utils\Html;
 
 class ProjectScoreResource extends Resource
 {
@@ -34,32 +41,7 @@ class ProjectScoreResource extends Resource
             ->schema([
 
                 Select::make('project_id')
-                    ->label('Proyek')
-                    ->options(function () {
-                        $user = auth()->user();
-                        $guru = $user->guru ?? null;
-                        Log::error("data login", auth()->user()->toArray());
-
-                        Log::error("data guru", $user->guru->toArray());
-
-                        if (!$guru) {
-                            // Handle error gracefully, atau redirect / abort
-                            abort(403, 'Anda tidak terdaftar sebagai guru.');
-                        }
-
-                        // Kalau bukan guru (misal admin), tampilkan semua
-                        if (!$user->hasRole('guru')) {
-                            return \App\Models\Projects::pluck('title_project', 'id');
-                        }
-
-                        // Ambil classroom yang dia ampu
-                        $guru = $user->guru;
-                        $classroomIds = $guru->classrooms->pluck('id');
-
-                        return \App\Models\Projects::whereHas('detail.header', function ($query) use ($classroomIds) {
-                            $query->whereIn('classroom_id', $classroomIds);
-                        })->pluck('title_project', 'id');
-                    })
+                    ->relationship('project', 'title_project')
                     ->searchable()
                     ->required()
                     ->reactive()
@@ -72,20 +54,24 @@ class ProjectScoreResource extends Resource
                         $projectId = $get('project_id');
                         if (!$projectId) return [];
 
-                        $project = \App\Models\Projects::with('detail.header.classroom')->find($projectId);
+                        $project = Projects::with('detail.header.classroom')->find($projectId);
+                        $classroom = $project?->detail?->header?->classroom;
+                        $tahunAjaran = $classroom?->studentClassrooms->first()?->academicYear?->tahun_ajaran ?? '-';
 
                         return [
                             Placeholder::make('judul')
                                 ->label('Judul ' . $project?->title_project ?? '-')
-                                ->content($project?->detail->title ?? '-'),
+                                ->content($project?->title_project ?? '-'),
 
+
+                            Placeholder::make('deskripsi')->label('Deskripsi')->content($project->detail->title ?? '-'),
                             Placeholder::make('kelas')
                                 ->label('Kelas')
                                 ->content($project?->detail?->header?->classroom?->name ?? '-'),
 
                             Placeholder::make('tahun_ajaran')
                                 ->label('Tahun Ajaran')
-                                ->content($project?->detail?->header?->tahun_ajaran ?? '-'),
+                                ->content($tahunAjaran ?? '-'),
 
                             Placeholder::make('fase')
                                 ->label('Fase')
@@ -113,14 +99,31 @@ class ProjectScoreResource extends Resource
                         }
 
                         // Load data siswa dan capaian
-                        $project = Projects::with('detail.header.classroom')->find($projectId);
-                        $classroomId = $project?->detail?->header?->classroom_id;
-                        $students = Student::where('classroom_id', $classroomId)->get();
+                        // $project = Projects::with('detail.header.classroom')->find($projectId);
+                        // $project = Projects::with('detail.header.classroom')->find($projectId);
+
+                        $guruId = auth()->user()->guru->id;
+
+                        $project = Projects::with([
+                            'detail.header.classroom.studentClassrooms.student'
+                        ])->find($projectId);
+
+                        $classroom = $project?->detail?->header?->classroom;
+
+                        $students = $classroom?->studentClassrooms
+                            ->filter(fn($sc) => $sc->wali_id === $guruId)
+                            ->map(fn($sc) => $sc->student)
+                            ->filter();
+
+
+
+                        // dd($students);
+                        // $students = Student::where('classroom_id', $classroomId)->get();
                         $details = ProjectDetail::where('project_id', $projectId)->with('capaianFase')->get();
                         $capaianFases = $details->pluck('capaianFase')->filter()->unique('id');
                         $parameters = ParameterPenilaian::pluck('bobot', 'id')->toArray();
 
-                        // Ambil nilai existing
+                        // // Ambil nilai existing
                         $existingScores = collect();
                         if ($record) {
                             $existingScores = ProjectScoreDetail::where('project_score_id', $record->id)->get()
@@ -161,7 +164,9 @@ class ProjectScoreResource extends Resource
                                         return [
                                             Placeholder::make("student_{$student->id}")
                                                 ->label('')
-                                                ->content(function () use ($student, $record) {
+                                                // ->content(function () use ($student, $record) {
+                                                ->content(function (Get $get, $livewire) use ($student) {
+                                                    $record = $livewire->record?->refresh();
                                                     $note = \App\Models\ProjectScoreDetail::where('student_id', $student->id)
                                                         ->where('project_score_id', $record?->id)
                                                         ->whereNotNull('note_project')
@@ -205,12 +210,12 @@ class ProjectScoreResource extends Resource
                                                     'capaian_fase_id' => $capaian->id,
                                                 ])->value('note_project');
 
-                                                return \Filament\Forms\Components\Group::make([
+                                                return Group::make([
                                                     Textarea::make("noteInputs.{$student->id}_{$capaian->id}")
                                                         ->label('')
-                                                        ->hidden()
+                                                        ->visible(false)
                                                         ->dehydrated(),
-                                                    \Filament\Forms\Components\Field::make($fieldName)
+                                                    Field::make($fieldName)
                                                         ->view('components.project-score.grid-radio-cell', [
                                                             'name' => $fieldName,
                                                             'value' => $existingScores[$fieldName] ?? null,
@@ -275,26 +280,6 @@ class ProjectScoreResource extends Resource
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
-
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
-
-        $user = auth()->user();
-
-        if ($user->hasRole('guru')) {
-            $guru = $user->guru;
-            $classroomIds = $guru->classrooms->pluck('id');
-
-            // Filter berdasarkan kelas yang dia ampu
-            $query->whereHas('project.detail.header', function ($q) use ($classroomIds) {
-                $q->whereIn('classroom_id', $classroomIds);
-            });
-        }
-
-        return $query;
-    }
-
 
     public static function getPages(): array
     {

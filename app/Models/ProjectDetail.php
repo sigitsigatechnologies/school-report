@@ -33,5 +33,14 @@ class ProjectDetail extends Model
     {
         return $this->belongsTo(CapaianFase::class);
     }
+
+    public function header() {
+        return $this->belongsTo(Projects::class);
+    }
     
+    public function studentClassroom()
+    {
+        return $this->belongsTo(StudentClassroom::class);
+    }
+
 }

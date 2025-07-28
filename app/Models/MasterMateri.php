@@ -11,12 +11,13 @@ class MasterMateri extends Model
     protected $fillable = [
         'mata_pelajaran',
         'classroom_id',
+        'academic_year_id',
         'status',
     ];
 
     public function classroom(): BelongsTo
     {
-        return $this->belongsTo(Classroom::class);
+        return $this->belongsTo(Classroom::class, 'classroom_id');
     }
 
     public function masterUnitMateris()
@@ -24,4 +25,8 @@ class MasterMateri extends Model
         return $this->hasMany(MasterUnitMateri::class);
     }
 
+    public function academicYear()
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
 }

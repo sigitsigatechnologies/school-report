@@ -7,6 +7,7 @@ use App\Filament\Resources\StudentResource\RelationManagers;
 use App\Models\Student;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -56,19 +57,6 @@ class StudentResource extends Resource
                             ->searchable(),
                         TextInput::make('pendidikan_sebelumnya')->label('Pendidikan Sebelumnya'),
                         Textarea::make('alamat')->label('Alamat Peserta Didik')->columnSpanFull(),
-                        Select::make('classroom_id')
-                            ->label('Kelas')
-                            ->options(function () {
-                                $user = auth()->user();
-
-                                if ($user->hasRole('guru')) {
-                                    return $user->guru->classrooms->pluck('name', 'id');
-                                }
-
-                                return \App\Models\Classroom::pluck('name', 'id');
-                            })
-                            ->required()
-                            ->reactive()
                     ]),
 
                 Section::make('Orang Tua')
@@ -84,32 +72,27 @@ class StudentResource extends Resource
                         TextInput::make('kota')->label('Kab/Kota'),
                         TextInput::make('provinsi'),
                     ])->columns(2),
-
-                Section::make('Wali Peserta Didik')
-                    ->schema([
-                        Select::make('wali_id')
-                            ->label('Wali (Guru)')
-                            ->options(function (callable $get) {
-                                $classroomId = $get('classroom_id');
-
-                                if (!$classroomId) return [];
-
-                                return \App\Models\Guru::whereHas(
-                                    'classrooms',
-                                    fn($q) =>
-                                    $q->where('classrooms.id', $classroomId)
-                                )->pluck('name', 'id');
-                            })
-                            ->searchable()
-                            ->preload()
-                            ->disabled(fn(callable $get) => !$get('classroom_id'))
-                            ->required(),
-                        TextInput::make('pekerjaan_wali')->label('Pekerjaan Wali'),
-                        Textarea::make('alamat_wali')->label('Alamat Wali'),
-                        Toggle::make('status')
-                            ->label('Aktif')
-                            ->default(true),
-                    ]),
+                    // Section::make('Wali Peserta Didik')
+                    //     ->schema([
+                    //         Hidden::make('wali_id')
+                    //             ->default(fn () => auth()->user()?->guru?->id),
+                    
+                    //         TextInput::make('pekerjaan_wali')
+                    //             ->label('Pekerjaan Wali')
+                    //             ->default(fn () => auth()->user()?->guru?->pekerjaan)
+                    //             ->disabled(), // hapus kalau mau bisa diubah
+                    
+                    //         Textarea::make('alamat_wali')
+                    //             ->label('Alamat Wali')
+                    //             ->default(fn () => auth()->user()?->guru?->alamat)
+                    //             ->disabled(),
+                    
+                            Toggle::make('status')
+                                ->label('Status Murid')
+                                ->default(true)
+                                ->helperText('Hijau = Aktif, Abu-abu = Tidak Aktif'),
+                    //     ]),
+                    
             ]);
     }
 
@@ -188,21 +171,21 @@ class StudentResource extends Resource
             ]);
     }
 
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
+    // public static function getEloquentQuery(): Builder
+    // {
+    //     $query = parent::getEloquentQuery();
 
-        $user = Auth::user();
+    //     $user = Auth::user();
 
-        if ($user->hasRole('guru')) {
-            $guru = $user->guru; // pastikan relasi `guru` ada di model User
-            $classroomIds = $guru->classrooms->pluck('id');
+    //     if ($user->hasRole('guru')) {
+    //         $guru = $user->guru; // pastikan relasi `guru` ada di model User
+    //         $classroomIds = $guru->classrooms->pluck('id');
 
-            $query->whereIn('classroom_id', $classroomIds);
-        }
+    //         $query->whereIn('classroom_id', $classroomIds);
+    //     }
 
-        return $query;
-    }
+    //     return $query;
+    // }
 
     public static function getRelations(): array
     {

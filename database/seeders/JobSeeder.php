@@ -45,7 +45,6 @@ class JobSeeder extends Seeder
             ['name' => 'Guru Kelas'],
             ['name' => 'Kepala Sekolah'],
             ['name' => 'Guru BK'],
-            ['name' => 'Super Admin'],
         ]);
 
         // 2. Buat role "guru" jika belum ada

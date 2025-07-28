@@ -12,19 +12,34 @@ class ProjectDescription extends Model
     use HasFactory;
 
     protected $fillable = [
-        'classroom_id',
+        'student_classroom_id',
         'header_name_project',
         'fase',
-        'tahun_ajaran',
     ];
 
-    public function classroom(): BelongsTo
+    
+// Akses classroom
+    public function classroom()
     {
-        return $this->belongsTo(Classroom::class);
+        return $this->hasOneThrough(
+            Classroom::class,
+            StudentClassroom::class,
+            'id', // foreign key di student_classrooms
+            'id', // primary key di classrooms
+            'student_classroom_id', // foreign key di project_descriptions
+            'classroom_id' // foreign key di student_classrooms
+        );
     }
+
 
     public function details(): HasMany
     {
         return $this->hasMany(ProjectDescriptionDetails::class);
     }
+
+    public function studentClassroom()
+    {
+        return $this->belongsTo(StudentClassroom::class);
+    }
+
 }

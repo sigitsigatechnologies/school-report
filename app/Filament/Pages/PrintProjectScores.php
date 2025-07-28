@@ -70,7 +70,18 @@ class PrintProjectScores extends Page implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(Student::query()->where('classroom_id', $this->selectedClassroom))
+            // ->query(Student::query()->where('classroom_id', $this->selectedClassroom))
+            ->query(function () {
+                $guruId = auth()->user()?->guru?->id;
+                $selectedClassroom = $this->selectedClassroom;
+        
+                return Student::withExists(['projectScoreDetails']) // Efisien untuk cek exists
+                    ->whereHas('studentClassrooms', function ($query) use ($guruId, $selectedClassroom) {
+                        $query->where('classroom_id', $selectedClassroom)
+                            ->where('wali_id', $guruId);
+                    });
+            })
+            
             ->columns([
                 TextColumn::make('nama')->label('Nama Siswa'),
                 TextColumn::make('nisn')->label('NISN'),

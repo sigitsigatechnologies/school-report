@@ -59,8 +59,10 @@ class CreateProjectScore extends CreateRecord
     });
 
     // Ambil siswa dari kelas
-    $classroomId = $projectScore->project->detail?->header?->classroom_id;
-    $students = Student::where('classroom_id', $classroomId)->get();
+    $classroom = $projectScore->project->detail?->header?->classroom;
+    $students = $classroom?->studentClassrooms
+        ->map(fn ($sc) => $sc->student)
+        ->filter();
 
     Log::info('Detail Map:', $detailMap->toArray());
 

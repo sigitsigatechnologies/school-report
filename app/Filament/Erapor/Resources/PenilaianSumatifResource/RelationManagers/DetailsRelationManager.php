@@ -66,9 +66,9 @@ class DetailsRelationManager extends RelationManager
     {
 
         $penilaianSumatif = $this->getOwnerRecord();
-        $students = Student::whereHas('classroom', function ($q) use ($penilaianSumatif) {
-            $q->where('id', $penilaianSumatif->masterMateri->classroom_id ?? null);
-        })->get();
+        // $students = Student::whereHas('classroom', function ($q) use ($penilaianSumatif) {
+        //     $q->where('id', $penilaianSumatif->masterMateri->classroom_id ?? null);
+        // })->get();
 
         $units = MasterUnitMateri::where('master_materi_id', $penilaianSumatif->master_materi_id)->get();
 
@@ -161,9 +161,12 @@ class DetailsRelationManager extends RelationManager
                 ]
             ))
 
-            ->query(Student::whereHas('classroom', function ($q) use ($penilaianSumatif) {
-                $q->where('id', $penilaianSumatif->masterMateri->classroom_id ?? null);
-            }))
+            ->query(
+                Student::whereHas('studentClassrooms.classroom', function ($q) use ($penilaianSumatif) {
+                    $q->where('id', $penilaianSumatif->masterMateri->classroom_id ?? null);
+                })
+            )
+            
             ->actions([
                 // ACTION INPUT NILAI
                 Action::make('Input Nilai')
@@ -209,8 +212,11 @@ class DetailsRelationManager extends RelationManager
 
     protected function getRelatedStudents($record)
     {
-        return Student::where('classroom_id', $record->masterMateri->classroom_id)->get();
+        return Student::whereHas('studentClassrooms', function ($q) use ($record) {
+            $q->where('classroom_id', $record->masterMateri->classroom_id);
+        })->get();
     }
+    
 
     protected function getRelatedUnits($record)
     {

@@ -5,6 +5,8 @@ namespace App\Filament\Erapor\Resources;
 use App\Filament\Erapor\Resources\PenilaianSumatifResource\Pages;
 use App\Filament\Erapor\Resources\PenilaianSumatifResource\RelationManagers;
 use App\Filament\Erapor\Resources\PenilaianSumatifResource\RelationManagers\DetailsRelationManager;
+use App\Models\Guru;
+use App\Models\MasterMateri;
 use App\Models\PenilaianSumatif;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
@@ -21,7 +23,7 @@ class PenilaianSumatifResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    protected static ?string $navigationGroup = 'Menu Penilaian';
+    protected static ?string $navigationGroup = 'Penilaian';
 
     public static function form(Form $form): Form
     {
@@ -34,26 +36,29 @@ class PenilaianSumatifResource extends Resource
 
                         // Kalau bukan guru (misalnya admin/operator), tampilkan semua
                         if (! $user->hasRole('guru')) {
-                            return \App\Models\MasterMateri::pluck('mata_pelajaran', 'id');
+                            return MasterMateri::pluck('mata_pelajaran', 'id');
                         }
 
                         // Ambil guru berdasarkan user_id
-                        $guru = \App\Models\Guru::where('user_id', $user->id)->first();
+                        $guru = Guru::where('user_id', $user->id)->first();
 
                         // Ambil semua classroom ID yang diajar guru tsb
                         $classroomIds = $guru?->classrooms->pluck('id');
 
-                        return \App\Models\MasterMateri::whereIn('classroom_id', $classroomIds)
+                        return MasterMateri::whereIn('classroom_id', $classroomIds)
                             ->pluck('mata_pelajaran', 'id');
                     })
                     ->searchable()
                     ->required(),
-                Select::make('semester')
-                    ->options([
-                        1 => 'Semester 1',
-                        2 => 'Semester 2',
-                    ])
-                    ->required(),
+                    Select::make('academic_year_id')
+                    ->label('Tahun Ajaran & Semester')
+                    ->relationship(
+                        name: 'academicYear',
+                        titleAttribute: 'id',
+                        modifyQueryUsing: fn($query) => $query->where('is_active', true),
+                    )
+                    ->getOptionLabelFromRecordUsing(fn($record) => $record->label)
+                    ->required()
             ]);
     }
 
@@ -62,7 +67,12 @@ class PenilaianSumatifResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('masterMateri.mata_pelajaran')->label('Mata Pelajaran'),
-                Tables\Columns\TextColumn::make('semester')->label('Semester'),
+                Tables\Columns\TextColumn::make('masterMateri.classroom.name') // akses nama kelas
+                    ->label('Kelas')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('academicYear.label')
+                    ->label('Tahun Ajaran & Semester')
             ])
             ->filters([
                 //

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->foreignId('academic_year_id')->constrained('academic_years')->cascadeOnDelete();
             $table->timestamps();
         });
     }

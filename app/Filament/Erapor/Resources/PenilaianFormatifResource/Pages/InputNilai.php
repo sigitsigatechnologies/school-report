@@ -29,7 +29,9 @@ class InputNilai extends Page
         $this->record = PenilaianFormatif::findOrFail($record);
         $classroomId = $this->record->masterMateri->classroom_id;
 
-        $this->students = Student::where('classroom_id', $classroomId)->get();
+        $this->students = Student::whereHas('studentClassrooms', function ($query) use ($classroomId) {
+            $query->where('classroom_id', $classroomId);
+        })->get();
         
         $this->tps = MasterTp::whereHas('masterUnitMateri.masterMateri', function ($q) {
             $q->where('id', $this->record->master_materi_id);

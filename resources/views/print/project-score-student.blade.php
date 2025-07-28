@@ -95,7 +95,7 @@
              <td>Nama Sekolah</td>
              <td>: SD BOPKRI Turen (Pelangi) Bantul</td>
              <td>TA</td>
-             <td>: {{ $header->tahun_ajaran ?? '-' }}</td>
+             <td>: {{ $academicYear ?? '-' }}</td>
          </tr>
          <tr>
              <td>Alamat Sekolah</td>
@@ -205,8 +205,8 @@
     <tr>
         <td style="padding-top: 60px;">{{ $student->nama_ayah ?? '-' }}</td>
         <td style="padding-top: 60px;">
-            {{ $student->wali->name }}<br>
-            NIP {{ $student->wali->nip ?? '-' }}<br>
+            {{ $wali->name ?? '-' }}<br>
+            NIP {{ $wali->nip ?? '-' }}<br>
         </td>
         <td style="padding-top: 60px;">
             Suparman, M.Pd<br>

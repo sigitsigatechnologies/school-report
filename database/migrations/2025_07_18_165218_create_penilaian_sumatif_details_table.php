@@ -19,7 +19,7 @@ return new class extends Migration
             $table->integer('nilai')->default(0);
             $table->integer('nilai_non_tes')->default(0);
             $table->integer('nilai_tes')->default(0);
-            $table->timestamps();
+            $table->timestamps();   
         });
     }
 

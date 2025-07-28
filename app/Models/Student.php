@@ -9,17 +9,31 @@ class Student extends Model
 {
     //
     protected $fillable = [
-        'nis', 'nisn', 'nama', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'agama',
-        'pendidikan_sebelumnya', 'alamat', 'nama_ayah', 'pekerjaan_ayah',
-        'nama_ibu', 'pekerjaan_ibu', 'jalan', 'kelurahan', 'kapanewon', 'kota', 'provinsi',
-        'nama_wali', 'pekerjaan_wali', 'alamat_wali', 'classroom_id','wali_id',
+        'nis',
+        'nisn',
+        'nama',
+        'jenis_kelamin',
+        'tempat_lahir',
+        'tanggal_lahir',
+        'agama',
+        'pendidikan_sebelumnya',
+        'alamat',
+        'nama_ayah',
+        'pekerjaan_ayah',
+        'nama_ibu',
+        'pekerjaan_ibu',
+        'jalan',
+        'kelurahan',
+        'kapanewon',
+        'kota',
+        'provinsi',
         'status'
     ];
 
-    public function classroom()
-    {
-        return $this->belongsTo(Classroom::class);
-    }
+    // public function classroom()
+    // {
+    //     return $this->belongsTo(Classroom::class);
+    // }
 
     public function projectScores(): HasMany
     {
@@ -29,11 +43,6 @@ class Student extends Model
     public function projectScoreDetails()
     {
         return $this->hasMany(ProjectScoreDetail::class);
-    }
-
-    public function wali()
-    {
-        return $this->belongsTo(Guru::class, 'wali_id');
     }
 
     public function penilaianFormatifDetails()
@@ -50,5 +59,21 @@ class Student extends Model
     {
         return $this->hasMany(PenilaianSumatifDetail::class);
     }
+
+        // App\Models\Student
+    public function studentClassroom()
+    {
+        return $this->belongsTo(StudentClassroom::class);
+    }
+
+
+    // App\Models\Student.php
+
+    public function studentClassrooms()
+    {
+        return $this->hasMany(\App\Models\StudentClassroom::class);
+    }
+
+    
 
 }

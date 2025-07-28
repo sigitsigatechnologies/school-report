@@ -35,6 +35,16 @@ class MasterExtraKurikulerResource extends Resource
                     ->required()
                     ->maxLength(255),
 
+                    Select::make('academic_year_id')
+                    ->label('Tahun Ajaran')
+                    ->relationship(
+                        name: 'academicYear',
+                        titleAttribute: 'id', // bisa apa saja asal kolom di tabel (akan override di getOptionLabel)
+                        modifyQueryUsing: fn ($query) => $query->active() // pakai scope dari model
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->label)
+                    ->required(),
+                
                 Select::make('status')
                     ->options([
                         'active' => 'Active',
@@ -51,6 +61,10 @@ class MasterExtraKurikulerResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label('Nama Ekskul')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('academicYear.tahun_ajaran')
                     ->label('Nama Ekskul')
                     ->sortable()
                     ->searchable(),

@@ -8,6 +8,7 @@ class PenilaianSumatif extends Model
 {
     protected $fillable = [
         'master_materi_id',
+        'academic_year_id',
         'semester',
     ];
 
@@ -19,6 +20,11 @@ class PenilaianSumatif extends Model
     public function masterMateri()
     {
         return $this->belongsTo(MasterMateri::class, 'master_materi_id');
+    }
+
+    public function academicYear()
+    {
+        return $this->belongsTo(AcademicYear::class);
     }
 
 }

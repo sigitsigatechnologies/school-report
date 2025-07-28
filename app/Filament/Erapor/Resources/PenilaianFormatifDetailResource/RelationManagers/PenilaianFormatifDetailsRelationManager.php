@@ -42,7 +42,7 @@ class PenilaianFormatifDetailsRelationManager extends RelationManager
         $record = $this->getOwnerRecord();
         $students = $this->getRelatedStudents($record);
         $tps = $this->getRelatedTps($record);
-        
+
         return $table
             ->query(fn() => $this->getRelatedStudents($this->getOwnerRecord())->toQuery()) // ❗ override query siswa saja
             ->columns([
@@ -96,8 +96,15 @@ class PenilaianFormatifDetailsRelationManager extends RelationManager
 
     protected function getRelatedStudents($record)
     {
-        return Student::where('classroom_id', $record->masterMateri->classroom_id)->get();
+        // Ambil classroom_id dari master materi
+        $classroomId = $record->masterMateri->classroom_id;
+
+        // Ambil semua siswa yang tergabung dalam kelas tersebut
+        return \App\Models\Student::whereHas('studentClassrooms', function ($query) use ($classroomId) {
+            $query->where('classroom_id', $classroomId);
+        })->with('penilaianFormatifDetails')->get();
     }
+
 
     protected function getRelatedTps($record)
     {

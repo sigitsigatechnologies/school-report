@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('penilaian_sumatifs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('master_materi_id')->constrained()->cascadeOnDelete();
-            $table->string('semester')->nullable();
+            $table->foreignId('academic_year_id')->constrained('academic_years')->cascadeOnDelete();
             $table->timestamps();
         });
     }

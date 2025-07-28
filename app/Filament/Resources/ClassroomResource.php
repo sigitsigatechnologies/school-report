@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ClassroomResource\Pages;
 use App\Filament\Resources\ClassroomResource\RelationManagers;
+use App\Models\AcademicYear;
 use App\Models\Classroom;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -29,7 +31,16 @@ class ClassroomResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')->required(),
-                Forms\Components\TextInput::make('title'),
+                Select::make('academic_year_id')
+                    ->label('Tahun Ajaran Aktif')
+                    ->relationship(
+                        name: 'academicYear',
+                        titleAttribute: 'tahun_ajaran',
+                        modifyQueryUsing: fn ($query) => $query->where('is_active', true)
+                    )
+                    ->getOptionLabelFromRecordUsing(function ($record) {
+                        return $record->tahun_ajaran . ' (' . ($record->semester == 1 ? 'Ganjil' : 'Genap') . ')';
+                    })->required(),
             ]);
     }
 
@@ -38,7 +49,7 @@ class ClassroomResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('title')->sortable(),
+                Tables\Columns\TextColumn::make('academicYear.tahun_ajaran')->sortable(),
             ])
             ->filters([
                 //
@@ -68,4 +79,10 @@ class ClassroomResource extends Resource
             'edit' => Pages\EditClassroom::route('/{record}/edit'),
         ];
     }
+
+    public function academicYear()
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
+
 }

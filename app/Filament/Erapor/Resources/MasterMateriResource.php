@@ -54,16 +54,20 @@ class MasterMateriResource extends Resource
                             })
                             ->required()
                             ->reactive(),
-    
-                        Toggle::make('status')
-                            ->label('Status Mata Pelajaran')
-                            ->inline()
-                            ->onColor('success')
-                            ->offColor('gray')
-                            ->default(true)
-                            ->helperText('Hijau = Aktif, Abu-abu = Tidak Aktif'),
+                        Select::make('academic_year_id')
+                            ->label('Tahun Ajaran')
+                            ->relationship('academicYear', 'tahun_ajaran')
+                            ->required(),
                     ]),
                 ]),
+
+                Toggle::make('status')
+                ->label('Status Mata Pelajaran')
+                ->inline()
+                ->onColor('success')
+                ->offColor('gray')
+                ->default(true)
+                ->helperText('Hijau = Aktif, Abu-abu = Tidak Aktif'),
                 
             ]);
     }
@@ -73,7 +77,8 @@ class MasterMateriResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('mata_pelajaran')->label('Mata Pelajaran')->searchable(),
-                TextColumn::make('classroom.name')->label('Kelas'),
+                // TextColumn::make('classroom.name')->label('Kelas'),
+                TextColumn::make('academicYear.tahun_ajaran')->label('Tahun Ajaran'),
                 BadgeColumn::make('status')
                     ->label('Status')
                     ->formatStateUsing(fn(bool $state) => $state ? 'Active' : 'Inactive')

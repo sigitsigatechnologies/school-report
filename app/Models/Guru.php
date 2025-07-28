@@ -13,6 +13,9 @@ class Guru extends Model
         'nip',
         'user_id',
         'job_id',
+        'alamat_wali',
+        'pekerjaan_wali',
+        'status_wali',
     ];
 
     public function user()
@@ -22,7 +25,7 @@ class Guru extends Model
 
     public function job()
     {
-        return $this->belongsTo(JobPosition::class);
+        return $this->belongsTo(JobPosition::class, 'job_id');
     }
 
     public function role()

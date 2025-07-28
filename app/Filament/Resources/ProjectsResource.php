@@ -4,15 +4,18 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjectsResource\Pages;
 use App\Filament\Resources\ProjectsResource\RelationManagers;
+use App\Models\AcademicYear;
 use App\Models\CapaianFase;
 use App\Models\Dimension;
 use App\Models\Elements;
 use App\Models\ProjectDescription;
 use App\Models\ProjectDescriptionDetails;
 use App\Models\Projects;
+use App\Models\StudentClassroom;
 use App\Models\SubElements;
 use Filament\Forms;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -52,61 +55,64 @@ class ProjectsResource extends Resource
                     ->label('Kelas')
                     ->disabled()
                     ->dehydrated(false),
-                // Select::make('project_description_detail_id')
-                //     ->label('Pilih Judul Proyek dari Deskripsi')
-                //     ->options(ProjectDescriptionDetails::all()->pluck('title', 'id'))
-                //     ->searchable()
-                //     ->reactive()
-                //     ->afterStateUpdated(function (callable $set, $state) {
-                //         $detail = \App\Models\ProjectDescriptionDetails::with('header.classroom')->find($state);
+                // Select::make('student_classroom_id')
+                //     ->label('Tahun Ajaran')
+                //     ->options(
+                //         \App\Models\StudentClassroom::with('academicYear')
+                //             ->get()
+                //             ->pluck('academicYear.tahun_ajaran', 'id')
+                //     )
+                //     ->dehydrated(true)
+                //     ->required(),
 
-                //         $set('fase', $detail?->header?->fase);
-                //         $set('classroom', $detail?->header?->classroom?->name);
-                //     })
-                //     ->afterStateHydrated(function (callable $get, callable $set) {
-                //         $state = $get('project_description_detail_id');
-
-                //         $detail = \App\Models\ProjectDescriptionDetails::with('header.classroom')->find($state);
-
-                //         $set('fase', $detail?->header?->fase);
-                //         $set('classroom', $detail?->header?->classroom?->name);
-                //     }),
-
+                Select::make('student_classroom_id')
+                    ->label('Tahun Ajaran')
+                    ->options(
+                        StudentClassroom::with('academicYear')
+                            ->get()
+                            ->unique('academic_year_id')
+                            ->mapWithKeys(function ($item) {
+                                return [$item->id => $item->academicYear->tahun_ajaran];
+                            })
+                    )
+                    ->dehydrated(true)
+                    ->required(),
                 Select::make('project_description_detail_id')
                     ->label('Pilih Judul Proyek dari Deskripsi')
                     ->options(function () {
                         $user = auth()->user();
-
-                        // Admin / operator => lihat semua
-                        if (! $user->hasRole('guru')) {
-                            return \App\Models\ProjectDescriptionDetails::with('header')
-                                ->get()
-                                ->pluck('title', 'id');
+                
+                        if (!$user->hasRole('guru')) {
+                            return \App\Models\ProjectDescriptionDetails::with('header')->get()->pluck('title', 'id');
                         }
-
-                        // Guru => hanya deskripsi milik kelas yang dia ampu
+                
                         $classroomIds = $user->guru->classrooms->pluck('id');
-
-                        return \App\Models\ProjectDescriptionDetails::whereHas(
-                            'header',
-                            fn($q) =>
+                
+                        return \App\Models\ProjectDescriptionDetails::whereHas('header.studentClassroom', fn($q) =>
                             $q->whereIn('classroom_id', $classroomIds)
-                        )
-                            ->pluck('title', 'id');
+                        )->pluck('title', 'id');
                     })
                     ->searchable()
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(function (callable $set, $state) {
-                        $detail = \App\Models\ProjectDescriptionDetails::with('header.classroom')->find($state);
+                        $detail = \App\Models\ProjectDescriptionDetails::with('header.studentClassroom.classroom')->find($state);
+                
                         $set('fase', $detail?->header?->fase);
-                        $set('classroom', $detail?->header?->classroom?->name);
+                        $set('classroom', $detail?->header?->studentClassroom?->classroom?->name);
+                
+                        $studentClassroomId = optional($detail?->header)->student_classroom_id;
+                        $set('student_classroom_id', $studentClassroomId);
+
                     })
                     ->afterStateHydrated(function (callable $get, callable $set) {
-                        $detail = \App\Models\ProjectDescriptionDetails::with('header.classroom')
-                            ->find($get('project_description_detail_id'));
+                        $detail = \App\Models\ProjectDescriptionDetails::with('header.studentClassroom.classroom')->find($get('project_description_detail_id'));
+                
                         $set('fase', $detail?->header?->fase);
-                        $set('classroom', $detail?->header?->classroom?->name);
+                        $set('classroom', $detail?->header?->studentClassroom?->classroom?->name);
+                        $studentClassroomId = optional($detail?->header)->student_classroom_id;
+                        $set('student_classroom_id', $studentClassroomId);
+
                     }),
 
                 Repeater::make('projectDetails')
@@ -197,18 +203,14 @@ class ProjectsResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-
         $user = Auth::user();
 
         if ($user->hasRole('guru')) {
             $classroomIds = $user->guru->classrooms->pluck('id');
 
-            // Project → detail → header → classroom_id
-            $query->whereHas(
-                'detail.header',
-                fn($q) =>
-                $q->whereIn('classroom_id', $classroomIds)
-            );
+            $query->whereHas('detail.header.studentClassroom', function ($q) use ($classroomIds) {
+                $q->whereIn('classroom_id', $classroomIds);
+            });
         }
 
         return $query;

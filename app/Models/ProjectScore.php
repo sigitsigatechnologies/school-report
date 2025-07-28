@@ -12,12 +12,24 @@ class ProjectScore extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Projects::class);
+        return $this->belongsTo(Projects::class, 'project_id');
     }
 
     public function details()
     {
         return $this->hasMany(ProjectScoreDetail::class);
     }
+
+    public function academicYear()
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
+
+    public function studentClassroom()
+    {
+        return $this->belongsTo(StudentClassroom::class);
+    }
+
+
 
 }

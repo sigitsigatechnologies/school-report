@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('project_descriptions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('classroom_id')->constrained()->onDelete('cascade');
+            $table->foreignId('student_classroom_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('header_name_project');
             $table->string('fase');
-            $table->string('tahun_ajaran');
             $table->timestamps();
         });
     }

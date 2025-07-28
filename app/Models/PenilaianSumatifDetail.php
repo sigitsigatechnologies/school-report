@@ -45,11 +45,12 @@ class PenilaianSumatifDetail extends Model
 
             $classroomId = $penilaian->masterMateri->classroom_id;
 
-            $student = \App\Models\Student::find($model->student_id);
+            $student = \App\Models\Student::with('studentClassrooms')->find($model->student_id);
 
-            if (! $student || $student->classroom_id != $classroomId) {
+            if (! $student || ! $student->studentClassrooms->contains('classroom_id', $classroomId)) {
                 throw new \Exception("Siswa bukan dari kelas yang sesuai dengan Master Materi.");
             }
+
         });
     }
 

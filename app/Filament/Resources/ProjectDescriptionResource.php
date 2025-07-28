@@ -6,6 +6,7 @@ use App\Filament\Resources\ProjectDescriptionResource\Pages;
 use App\Filament\Resources\ProjectDescriptionResource\RelationManagers;
 use App\Models\ProjectDescription;
 use App\Models\ProjectDescriptions;
+use App\Models\StudentClassroom;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -30,66 +31,63 @@ class ProjectDescriptionResource extends Resource
     protected static ?string $navigationGroup = 'Project';
 
     public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Select::make('classroom_id')
-                    ->label('Kelas')
-                    ->required()
-                    ->options(function () {
-                        $user = auth()->user();
+{
+    return $form
+        ->schema([
+            Select::make('student_classroom_id')
+                ->label('Kelas & Tahun Ajaran')
+                ->required()
+                ->options(function () {
+                    $query = StudentClassroom::with(['classroom', 'academicYear']);
 
-                        if ($user->hasRole('guru')) {
-                            return $user->guru->classrooms->pluck('name', 'id');
-                        }
+                    $user = auth()->user();
 
-                        return \App\Models\Classroom::pluck('name', 'id');
-                    }),
+                    if ($user->hasRole('guru')) {
+                        $guruClassroomIds = $user->guru->classrooms->pluck('id');
+                        $query->whereIn('classroom_id', $guruClassroomIds);
+                    }
 
+                    return $query->get()->mapWithKeys(function ($item) {
+                        $label = $item->classroom->name . ' - ' . ($item->academicYear->tahun_ajaran ?? '-');
+                        return [$item->id => $label];
+                    });
+                }),
 
-                TextInput::make('header_name_project')
-                    ->label('Judul Proyek Utama')
-                    ->required(),
+            TextInput::make('header_name_project')
+                ->label('Judul Proyek Utama')
+                ->required(),
 
-                Select::make('fase')
-                    ->options([
-                        'A' => 'Fase A',
-                        'B' => 'Fase B',
-                        'C' => 'Fase C',
-                        'D' => 'Fase D',
-                        'E' => 'Fase E',
-                    ])
-                    ->required(),
+            Select::make('fase')
+                ->options([
+                    'A' => 'Fase A',
+                    'B' => 'Fase B',
+                    'C' => 'Fase C',
+                    'D' => 'Fase D',
+                    'E' => 'Fase E',
+                ])
+                ->required(),
 
-                TextInput::make('tahun_ajaran')
-                    ->label('Tahun Ajaran')
-                    ->required(),
+            Repeater::make('details')
+                ->relationship('details')
+                ->schema([
+                    TextInput::make('title')->required(),
+                    Textarea::make('description')->required(),
+                ])
+                ->minItems(1)
+                ->columns(1)
+                ->columnSpanFull(),
+        ]);
+}
 
-                // Detail repeater
-                Repeater::make('details')
-                    ->relationship('details')
-                    ->schema([
-                        TextInput::make('title')->required(),
-                        Textarea::make('description')->required(),
-                    ])
-                    ->minItems(1)
-                    ->columns(1)
-                    ->columnSpanFull()
-
-            ]);
-    }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('classroom.name')->label('Kelas'),
+                TextColumn::make('studentClassroom.classroom.name')->label('Kelas'),
+                TextColumn::make('studentClassroom.academicYear.tahun_ajaran')->label('Tahun Ajaran'),
                 TextColumn::make('header_name_project')->label('Deskripsi Proyek'),
                 TextColumn::make('fase')->label('Fase'),
-                TextColumn::make('tahun_ajaran')->label('Tahun Ajaran'),
-            ])
-            ->filters([
-                //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -102,20 +100,23 @@ class ProjectDescriptionResource extends Resource
     }
 
     public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
+{
+    $query = parent::getEloquentQuery();
+    $user = Auth::user();
 
-        $user = Auth::user();
+    if ($user->hasRole('guru')) {
+        $guru = $user->guru;
+        $classroomIds = $guru->classrooms->pluck('id');
 
-        if ($user->hasRole('guru')) {
-            $guru = $user->guru;
-            $classroomIds = $guru->classrooms->pluck('id');
-
-            $query->whereIn('classroom_id', $classroomIds);
-        }
-
-        return $query;
+        // Join relasi studentClassroom untuk bisa filter by classroom_id
+        $query->whereHas('studentClassroom', function ($q) use ($classroomIds) {
+            $q->whereIn('classroom_id', $classroomIds);
+        });
     }
+
+    return $query;
+}
+
 
 
     public static function getRelations(): array

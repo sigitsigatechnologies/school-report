@@ -12,11 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('students', function (Blueprint $table) {
+            $table->engine = 'InnoDB'; 
             $table->id();
-            $table->foreignId('classroom_id')->constrained()->onDelete('cascade');
-            $table->foreignId('wali_id')->nullable()->constrained('gurus')->onDelete('set null');
-
-
             $table->string('nis')->unique();
             $table->string('nisn')->nullable();
             $table->string('nama');
@@ -38,12 +35,6 @@ return new class extends Migration
             $table->string('kapanewon')->nullable();
             $table->string('kota')->nullable();
             $table->string('provinsi')->nullable();
-
-            // Wali
-            $table->string('nama_wali')->nullable();
-            $table->string('pekerjaan_wali')->nullable();
-            $table->text('alamat_wali')->nullable();
-
             $table->timestamps();
             $table->boolean('status')->default(true);
         });

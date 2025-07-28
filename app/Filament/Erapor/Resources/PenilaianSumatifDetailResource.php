@@ -21,7 +21,7 @@ class PenilaianSumatifDetailResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';
 
-    protected static ?string $navigationGroup = 'Menu Penilaian';
+    protected static ?string $navigationGroup = 'Penilaian';
 
     public static function form(Form $form): Form
     {

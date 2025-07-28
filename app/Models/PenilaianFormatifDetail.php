@@ -15,7 +15,7 @@ class PenilaianFormatifDetail extends Model
 
     public function penilaianFormatif()
     {
-        return $this->belongsTo(PenilaianFormatif::class);
+        return $this->belongsTo(PenilaianFormatif::class,'penilaian_formatif_id');
     }
 
     public function student()

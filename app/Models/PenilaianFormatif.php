@@ -8,12 +8,13 @@ class PenilaianFormatif extends Model
 {
     protected $fillable = [
         'master_materi_id',
+        'academic_year_id',
         'semester',
     ];
 
     public function masterMateri()
     {
-        return $this->belongsTo(MasterMateri::class);
+        return $this->belongsTo(MasterMateri::class, 'master_materi_id');
     }
 
     public function classroom()
@@ -25,5 +26,14 @@ class PenilaianFormatif extends Model
     {
         return $this->hasMany(PenilaianFormatifDetail::class);
     }
+
+    public function academicYear()
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
     
+    public function details()
+    {
+        return $this->hasMany(PenilaianFormatifDetail::class);
+    }
 }

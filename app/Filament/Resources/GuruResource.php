@@ -8,11 +8,14 @@ use App\Models\JobPosition;
 use App\Models\User;
 use Filament\Forms\Components\MultiSelect;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -44,7 +47,20 @@ class GuruResource extends Resource
                     ->relationship('classrooms', 'name')
                     ->label('Kelas yang Diampu')
                     ->preload()
-                    ->searchable()
+                    ->searchable(),
+
+                // Tambahan:
+                Textarea::make('alamat_wali')
+                    ->label('Alamat Wali')
+                    ->rows(2)
+                    ->maxLength(255),
+
+                TextInput::make('pekerjaan_wali')
+                    ->label('Pekerjaan Wali')
+                    ->maxLength(100),
+
+                Toggle::make('status_wali')
+                    ->label('Status Wali Aktif'),
             ]);
     }
 
@@ -52,13 +68,20 @@ class GuruResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name'),
+                TextColumn::make('name')->label('Nama'),
                 TextColumn::make('nip'),
-                TextColumn::make('user.name'),
-                TextColumn::make('job.name'),
+                TextColumn::make('user.name')->label('User'),
+                TextColumn::make('job.name')->label('Jabatan'),
                 BadgeColumn::make('classrooms.name')
                     ->label('Kelas Diampu')
-                    ->separator(', ')
+                    ->separator(', '),
+
+                // Tambahan:
+                TextColumn::make('pekerjaan_wali')->label('Pekerjaan Wali'),
+                TextColumn::make('alamat_wali')->label('Alamat Wali')->limit(20),
+                IconColumn::make('status_wali')
+                    ->label('Status Wali')
+                    ->boolean(),
             ])
             ->filters([
                 //
