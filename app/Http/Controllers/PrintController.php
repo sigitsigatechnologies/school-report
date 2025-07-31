@@ -33,21 +33,20 @@ class PrintController extends Controller
     // }
 
     public function studentScore($id, $student_id)
-{
-    $score = ProjectScore::with([
-        'project.parameterPenilaian',
-        'project.detail.header.classroom',
-        'details' => fn($q) => $q->where('student_id', $student_id)->with(['capaianFase', 'parameterPenilaian', 'projectDetail.project']),
-    ])->findOrFail($id);
+    {
+        $score = ProjectScore::with([
+            'project.parameterPenilaian',
+            'project.detail.header.classroom',
+            'details' => fn($q) => $q->where('student_id', $student_id)->with(['capaianFase', 'parameterPenilaian', 'projectDetail.project']),
+        ])->findOrFail($id);
 
-    $student = $score->details->first()?->student;
-    $student?->loadMissing('classroom.gurus');
+        $student = $score->details->first()?->student;
+        $student?->loadMissing('classroom.gurus');
 
-    $groupedDetails = $score->details->groupBy(fn($item) => $item->projectDetail->project->title_project ?? 'Tanpa Judul');
-    $gurus = $student?->classroom?->gurus ?? collect();
-    $project = $score->project;
+        $groupedDetails = $score->details->groupBy(fn($item) => $item->projectDetail->project->title_project ?? 'Tanpa Judul');
+        $gurus = $student?->classroom?->gurus ?? collect();
+        $project = $score->project;
 
-    return view('print.project-score-student', compact('project', 'score', 'student', 'groupedDetails', 'gurus'));
-}
-
+        return view('print.project-score-student', compact('project', 'score', 'student', 'groupedDetails', 'gurus'));
+    }
 }

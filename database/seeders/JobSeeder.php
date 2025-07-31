@@ -49,15 +49,23 @@ class JobSeeder extends Seeder
 
         // 2. Buat role "guru" jika belum ada
         Role::firstOrCreate(['name' => 'super admin', 'guard_name' => 'web']);
+
+        User::where('email', 'superadmin@mail.com')->delete();
         
-        // 3. Buat user baru
-        $user = User::create([
-            'name' => 'Super Admin',
-            'email' => 'superadmin@mail.com',
-            'password' => Hash::make('superadmin'),
-            'email_verified_at' => now(),
-            'remember_token' => Str::random(10),
-        ]);
+        $user = User::firstOrCreate(
+            ['email' => 'superadmin@mail.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('superadmin'),
+                'email_verified_at' => now(),
+                'remember_token' => Str::random(10),
+            ]
+        );
+        
+
+        if (!$user->hasRole('super_admin')) {
+            $user->assignRole('super_admin');
+        }
 
         $user->assignRole('super_admin');
 

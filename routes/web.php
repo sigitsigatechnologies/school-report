@@ -13,7 +13,7 @@ Route::get('/', function () {
 });
 
 Route::get('/login', function () {
-    return redirect('/admin/login'); // atau redirect ke panel login sesuai kebutuhanmu
+    return redirect('/p5/login'); // atau redirect ke panel login sesuai kebutuhanmu
 })->name('login');
 
 Route::get('/project-scores/{id}/print', [PrintController::class, 'projectScore'])->name('print.project-score');

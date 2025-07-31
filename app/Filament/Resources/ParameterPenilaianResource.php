@@ -22,7 +22,7 @@ class ParameterPenilaianResource extends Resource
 
     protected static ?string $navigationLabel = 'Parameter Penilaian';
     protected static ?string $pluralModelLabel = 'Parameter Penilaian';
-    protected static ?string $navigationGroup = 'Parameter';
+    protected static ?string $navigationGroup = 'Penilaian';
 
     public static function form(Form $form): Form
     {

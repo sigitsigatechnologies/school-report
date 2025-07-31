@@ -27,6 +27,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Log;
 use Nette\Utils\Html;
 
 class ProjectScoreResource extends Resource
@@ -34,6 +35,8 @@ class ProjectScoreResource extends Resource
     protected static ?string $model = ProjectScore::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+
+    protected static ?string $navigationGroup = 'Penilaian';
 
     public static function form(Form $form): Form
     {
@@ -57,7 +60,6 @@ class ProjectScoreResource extends Resource
                         $project = Projects::with('detail.header.classroom')->find($projectId);
                         $classroom = $project?->detail?->header?->classroom;
                         $tahunAjaran = $classroom?->studentClassrooms->first()?->academicYear?->tahun_ajaran ?? '-';
-
                         return [
                             Placeholder::make('judul')
                                 ->label('Judul ' . $project?->title_project ?? '-')

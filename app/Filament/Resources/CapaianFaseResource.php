@@ -18,7 +18,7 @@ class CapaianFaseResource extends Resource
 {
     protected static ?string $model = CapaianFase::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationIcon = 'heroicon-o-cube-transparent';
 
     protected static ?string $navigationLabel = 'Parameter Capaian Fase';
     protected static ?string $pluralModelLabel = 'Parameter Capaian Fase';

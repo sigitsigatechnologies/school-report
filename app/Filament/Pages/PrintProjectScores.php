@@ -21,6 +21,7 @@ class PrintProjectScores extends Page implements HasForms, HasTable
 
     protected static ?string $navigationIcon = 'heroicon-o-printer';
     protected static string $view = 'filament.pages.print-project-scores';
+    protected static ?string $navigationGroup = 'Printer';
 
     public ?int $selectedClassroom = null;
 
@@ -48,24 +49,6 @@ class PrintProjectScores extends Page implements HasForms, HasTable
                     ->afterStateUpdated(fn() => $this->resetTable()),
             ]);
     }
-
-    // public function table(Table $table): Table
-    // {
-    //     return $table
-    //         ->query(Student::query()->where('classroom_id', $this->selectedClassroom))
-    //         ->columns([
-    //             TextColumn::make('nama')->label('Nama Siswa'),
-    //             TextColumn::make('nisn')->label('NISN'),
-    //         ])
-    //         ->actions([
-    //             Action::make('cetak')
-    //                 ->label('Cetak PDF')
-    //                 ->url(fn($record) => route('print.project.score.student', $record->id))
-    //                 ->openUrlInNewTab()
-    //                 ->color('primary')
-    //                 ->icon('heroicon-o-printer'),
-    //         ]);
-    // }
 
     public function table(Table $table): Table
     {

@@ -19,7 +19,7 @@ class SubElementResource extends Resource
 {
     protected static ?string $model = SubElements::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationIcon = 'heroicon-o-cube-transparent';
     protected static ?string $navigationLabel = 'Parameter Sub Element';
     protected static ?string $pluralModelLabel = 'Parameter Sub Element';
     protected static ?string $navigationGroup = 'Parameter';

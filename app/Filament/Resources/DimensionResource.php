@@ -18,7 +18,7 @@ class DimensionResource extends Resource
 {
     protected static ?string $model = Dimension::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationIcon = 'heroicon-o-cube-transparent';
 
     protected static ?string $navigationLabel = 'Parameter Dimensi';
     protected static ?string $pluralModelLabel = 'Parameter Dimensi';

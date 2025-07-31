@@ -39,15 +39,13 @@ class ViewProjectScore extends EditRecord
         $details = $record->details()->with(['student', 'capaianFase', 'parameterPenilaian'])->get();
         $groupedDetails = $details->groupBy('student_id');
 
-
-
         return $form->schema([
             Section::make('Informasi Proyek')
                 ->schema([
                     Placeholder::make('judul')->label('Judul Proyek')->content($project->title_project ?? '-'),
                     Placeholder::make('deskripsi')->label('Deskripsi')->content($project->detail->title ?? '-'),
                     Placeholder::make('kelas')->label('Kelas')->content($project->detail?->header?->classroom?->name ?? '-'),
-                    Placeholder::make('tahun')->label('Tahun Ajaran')->content($project->detail?->header?->tahun_ajaran ?? '-'),
+                    Placeholder::make('tahun')->label('Tahun Ajaran')->content($project->detail?->header?->classroom->academicYear->tahun_ajaran ?? '-'),
                     Placeholder::make('fase')->label('Fase')->content($project->detail?->header?->fase ?? '-'),
                 ])
                 ->columns(2),

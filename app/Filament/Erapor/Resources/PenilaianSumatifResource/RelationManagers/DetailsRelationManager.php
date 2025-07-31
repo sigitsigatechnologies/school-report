@@ -93,7 +93,7 @@ class DetailsRelationManager extends RelationManager
                 })->toArray(),
                 [
                     TextColumn::make('rata_rata_unit')
-                        ->label('Rata-rata Nilai Unit')
+                        ->label('NA Sumatif Lingkup Materi')
                         ->getStateUsing(function ($record) use ($penilaianSumatif) {
                             $nilaiList = \App\Models\PenilaianSumatifDetail::where('penilaian_sumatif_id', $penilaianSumatif->id)
                                 ->where('student_id', $record->id)
@@ -157,6 +157,42 @@ class DetailsRelationManager extends RelationManager
                         })->extraAttributes([
                             'style' => 'background-color:rgb(170, 254, 153);', // biru muda
                         ]),
+                        TextColumn::make('nilai_rapor')
+                        ->label('Nilai Rapor')
+                        ->getStateUsing(function ($record) use ($penilaianSumatif) {
+                            // Ambil rata-rata unit
+                            $nilaiUnit = \App\Models\PenilaianSumatifDetail::where('penilaian_sumatif_id', $penilaianSumatif->id)
+                                ->where('student_id', $record->id)
+                                ->whereNotNull('nilai')
+                                ->pluck('nilai')
+                                ->toArray();
+                    
+                            $avgUnit = count($nilaiUnit) > 0 ? array_sum($nilaiUnit) / count($nilaiUnit) : null;
+                    
+                            // Ambil tes dan non-tes untuk summary
+                            $tes = \App\Models\PenilaianTesDetail::whereHas('detail', function ($q) use ($penilaianSumatif, $record) {
+                                $q->where('penilaian_sumatif_id', $penilaianSumatif->id)
+                                    ->where('student_id', $record->id);
+                            })->first();
+                    
+                            $nilaiTes = $tes?->nilai_tes;
+                            $nilaiNonTes = $tes?->nilai_non_tes;
+                    
+                            $summaryScores = [];
+                            if (!is_null($nilaiTes)) $summaryScores[] = $nilaiTes;
+                            if (!is_null($nilaiNonTes)) $summaryScores[] = $nilaiNonTes;
+                    
+                            $avgSummary = count($summaryScores) > 0 ? array_sum($summaryScores) / count($summaryScores) : null;
+                    
+                            // Hitung nilai rapor
+                            if (!is_null($avgUnit) && !is_null($avgSummary)) {
+                                return number_format(($avgUnit + $avgSummary) / 2, 2);
+                            }
+                    
+                            return '-';
+                        })->extraAttributes([
+                            'style' => 'background-color:rgb(255, 255, 160); font-weight: bold;', // kuning muda
+                        ]),
 
                 ]
             ))
@@ -166,7 +202,7 @@ class DetailsRelationManager extends RelationManager
                     $q->where('id', $penilaianSumatif->masterMateri->classroom_id ?? null);
                 })
             )
-            
+
             ->actions([
                 // ACTION INPUT NILAI
                 Action::make('Input Nilai')
@@ -216,7 +252,7 @@ class DetailsRelationManager extends RelationManager
             $q->where('classroom_id', $record->masterMateri->classroom_id);
         })->get();
     }
-    
+
 
     protected function getRelatedUnits($record)
     {

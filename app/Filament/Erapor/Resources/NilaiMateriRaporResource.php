@@ -28,7 +28,7 @@ class NilaiMateriRaporResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationGroup = 'Penilaian';
-    protected static ?string $label = 'Nilai Rapor';
+    protected static ?string $label = 'Legal Rapor';
 
 
     public static function form(Form $form): Form

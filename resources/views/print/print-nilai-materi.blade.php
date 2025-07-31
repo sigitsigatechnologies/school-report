@@ -25,6 +25,7 @@
 
         .info-table td {
             padding: 1px;
+            border: none;
         }
 
         th,
@@ -62,20 +63,25 @@
         .score-table td:nth-child(3) {
             text-align: left;
         }
+
+        thead th {
+            background-color: #a8cef4;
+        }
+
         /* .info-table td {
             padding: 2px 4px;
             font-size: 11px;
         } */
     </style>
 
-<img src="{{ public_path('images/logo_bopkri.png') }}" 
-style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index: -1;">
+    <img src="{{ public_path('images/logo_bopkri.png') }}"
+        style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index: -1;">
     <div class="title">LAPORAN HASIL BELAJAR</div>
 
     <table class="info-table">
         <tr>
             <td>Nama Peserta Didik
-             <td>: {{ $rapor->studentClassroom->student->nama ?? '—' }} </td>
+            <td>: {{ $rapor->studentClassroom->student->nama ?? '—' }} </td>
             <td>Kelas</td>
             <td>: {{ $rapor->studentClassroom->classroom->class_abjad ?? '—' }}</td>
         </tr>
@@ -87,15 +93,15 @@ style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index
         </tr>
         <tr>
             <td>Nama Sekolah</td>
-            <td>: SD BOPKRI Turen</td>
+            <td>: {{ $schoolProfile->nama_sekolah }}</td>
             <td>Tahun Ajaran</td>
             <td>: {{ $rapor->studentClassroom->academicYear->tahun_ajaran ?? '—' }}</td>
         </tr>
         <tr>
             <td>Alamat Sekolah</td>
-            <td>: Jalan Merdeka No. 17</td>
+            <td>: {{ $schoolProfile->alamat }}</td>
             <td>Fase</td>
-            <td>: {{$rapor->project}}</td>
+            <td>: {{ $schoolProfile->fase }}</td>
         </tr>
     </table>
 
@@ -105,7 +111,7 @@ style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index
                 <th style="width: 3%; text-align:center">No.</th>
                 <th style="width: 25%; text-align:center">Muatan Pelajaran</th>
                 <th style="width: 8%; text-align:center">Nilai Akhir</th>
-                <th>Capaian Kompetensi</th>
+                <th style="text-align:center">Capaian Kompetensi</th>
             </tr>
         </thead>
         <tbody>
@@ -148,7 +154,7 @@ style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index
 
     <h4>Tinggi dan Berat Badan</h4>
     <table class="score-table" style="width: 60%;">
-        <tr>
+        <tr style="background-color: #a8cef4;">
             <th style="width: 3%;">No.</th>
             <th style="width: 25%;">Aspek yang diukur</th>
             <th style="width: 10%;">Semester {{ $rapor->studentClassroom->academicYear->semester ?? '—' }}</th>
@@ -168,7 +174,7 @@ style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index
 
     <h4>Ketidakhadiran</h4>
     <table class="score-table" style="width: 40%;">
-        <tr>
+        <tr style="background-color: #a8cef4;">
             <td><strong>Tanpa Keterangan:</strong></td>
             <td style="width: 20%;">{{ $kesehatanAbsensi->tanpa_keterangan ?? 0 }} hari</td>
         </tr>
@@ -184,7 +190,7 @@ style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index
 
     <h4></h4>
     <table class="score-table">
-        <tr>
+        <tr style="background-color: #a8cef4;">
             <td style="text-align: center;"><strong>Saran:</strong></td>
         </tr>
         <tr>
@@ -202,17 +208,20 @@ style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index
             return $map[$num] ?? '';
         }
 
-        $naikKelas = $rapor->naik_kelas; // nilai: 0 (lulus) atau angka kelas
-        $kelasSekarang = (int) $rapor->studentClassroom->classroom->name;
-
-        if ($naikKelas === 0) {
-            // Lulus (misalnya dari kelas 6 ke lulus)
-            $status = 'Lulus';
-            $output = $status;
+        $naikKelas = $rapor->naik_kelas; // bisa null / kosong
+        $kelasSekarang = (int) ($rapor->studentClassroom->classroom->name ?? 0);
+        // dd("Kelas naik :",$naikKelas);
+        // dd("kelas sekarang :",$kelasSekarang);
+        if (is_null($naikKelas)) {
+            // Belum diisi
+            $output = 'Naik/Tinggal) kelas ........';
+        } elseif ($naikKelas === 0) {
+            $output = 'Lulus';
         } else {
             $romawi = romawi($naikKelas);
-            if ($naikKelas === $kelasSekarang) {
-                // Tidak naik / tinggal kelas
+            // dd('masok', $naikKelas, $kelasSekarang);
+            if ($naikKelas == $kelasSekarang) {
+                // Tinggal kelas
                 $output = '<s>Naik</s>/Tinggal*) kelas ' . $naikKelas . ' (' . $romawi . ')';
             } else {
                 // Naik kelas
@@ -220,6 +229,7 @@ style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index
             }
         }
     @endphp
+
 
     <table style="width: 100%; font-size: 12px;">
         <tr>
@@ -250,8 +260,8 @@ style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index
             <td style="width: 33%; text-align: center;">
                 Mengetahui,<br>
                 Kepala Sekolah<br><br><br><br>
-                <strong>Suparman, M.Pd.</strong><br>
-                <strong>NIP 123456789</strong>
+                <strong>{{ $schoolProfile->kepala_sekolah ?? '-' }}</strong><br>
+                <strong>{{ $schoolProfile->nip_kepala_sekolah ?? '-' }}</strong>
             </td>
 
             <td style="width: 33%; text-align: right;">
