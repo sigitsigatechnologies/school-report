@@ -16,9 +16,11 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ProjectDescriptionResource extends Resource
 {
@@ -38,19 +40,15 @@ class ProjectDescriptionResource extends Resource
                 ->label('Kelas & Tahun Ajaran')
                 ->required()
                 ->options(function () {
-                    $query = StudentClassroom::with(['classroom', 'academicYear']);
-
-                    $user = auth()->user();
-
-                    if ($user->hasRole('guru')) {
-                        $guruClassroomIds = $user->guru->classrooms->pluck('id');
-                        $query->whereIn('classroom_id', $guruClassroomIds);
-                    }
+                    $query = StudentClassroom::with(['classroom', 'academicYear'])
+                    ->whereHas('academicYear', fn ($q) => $q->where('is_active', true))
+                    ->select('classroom_id', 'academic_year_id', DB::raw('MIN(id) as id'))
+                    ->groupBy('classroom_id', 'academic_year_id');
 
                     return $query->get()->mapWithKeys(function ($item) {
                         $label = $item->classroom->name . ' - ' . ($item->academicYear->tahun_ajaran ?? '-');
                         return [$item->id => $label];
-                    });
+                    });                    
                 }),
 
             TextInput::make('header_name_project')
@@ -86,8 +84,13 @@ class ProjectDescriptionResource extends Resource
             ->columns([
                 TextColumn::make('studentClassroom.classroom.name')->label('Kelas'),
                 TextColumn::make('studentClassroom.academicYear.tahun_ajaran')->label('Tahun Ajaran'),
-                TextColumn::make('header_name_project')->label('Deskripsi Proyek'),
+                TextColumn::make('header_name_project')->label('Deskripsi Proyek')->searchable(),
                 TextColumn::make('fase')->label('Fase'),
+            ])
+            ->filters([
+                SelectFilter::make('studentClassroom.academicYear.tahun_ajaran')
+                ->label('Tahun Ajaran')
+                ->relationship('studentClassroom.academicYear', 'tahun_ajaran'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

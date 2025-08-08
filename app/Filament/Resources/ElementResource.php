@@ -42,7 +42,7 @@ class ElementResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('Element'),
+                TextColumn::make('name')->label('Element')->searchable(),
             ])
             ->filters([
                 //

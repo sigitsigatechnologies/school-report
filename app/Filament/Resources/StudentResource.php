@@ -74,33 +74,36 @@ class StudentResource extends Resource
                         TextInput::make('kota')->label('Kab/Kota'),
                         TextInput::make('provinsi'),
                     ])->columns(2),
-                    // Section::make('Wali Peserta Didik')
-                    //     ->schema([
-                    //         Hidden::make('wali_id')
-                    //             ->default(fn () => auth()->user()?->guru?->id),
-                    
-                    //         TextInput::make('pekerjaan_wali')
-                    //             ->label('Pekerjaan Wali')
-                    //             ->default(fn () => auth()->user()?->guru?->pekerjaan)
-                    //             ->disabled(), // hapus kalau mau bisa diubah
-                    
-                    //         Textarea::make('alamat_wali')
-                    //             ->label('Alamat Wali')
-                    //             ->default(fn () => auth()->user()?->guru?->alamat)
-                    //             ->disabled(),
-                    
-                            Toggle::make('status')
-                                ->label('Status Murid')
-                                ->default(true)
-                                ->helperText('Hijau = Aktif, Abu-abu = Tidak Aktif'),
-                    //     ]),
-                    
+                // Section::make('Wali Peserta Didik')
+                //     ->schema([
+                //         Hidden::make('wali_id')
+                //             ->default(fn () => auth()->user()?->guru?->id),
+
+                //         TextInput::make('pekerjaan_wali')
+                //             ->label('Pekerjaan Wali')
+                //             ->default(fn () => auth()->user()?->guru?->pekerjaan)
+                //             ->disabled(), // hapus kalau mau bisa diubah
+
+                //         Textarea::make('alamat_wali')
+                //             ->label('Alamat Wali')
+                //             ->default(fn () => auth()->user()?->guru?->alamat)
+                //             ->disabled(),
+
+                Toggle::make('status')
+                    ->label('Status Murid')
+                    ->default(true)
+                    ->helperText('Hijau = Aktif, Abu-abu = Tidak Aktif'),
+                //     ]),
+
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->query(
+                static::getFilteredStudentQuery()
+            )
             ->columns([
                 TextColumn::make('nis')->label('NIS')
                     ->label('NIS')
@@ -110,7 +113,7 @@ class StudentResource extends Resource
                 TextColumn::make('nama')->label('Nama')->label('Nama')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('classroom.name')
+                TextColumn::make('studentClassrooms.classroom.name')
                     ->label('Kelas')
                     ->sortable()
                     ->searchable(),
@@ -131,9 +134,9 @@ class StudentResource extends Resource
                 TextColumn::make('kota')->label('Kab/Kota'),
                 TextColumn::make('provinsi')->label('Provinsi'),
 
-                TextColumn::make('nama_wali')->label('Nama Wali'),
-                TextColumn::make('pekerjaan_wali')->label('Pekerjaan Wali'),
-                TextColumn::make('alamat_wali')->label('Alamat Wali')->limit(30),
+                TextColumn::make('studentClassrooms.wali.name')->label('Nama Wali'),
+                TextColumn::make('studentClassrooms.wali.pekerjaan_wali')->label('Pekerjaan Wali'),
+                TextColumn::make('studentClassrooms.wali.alamat_wali')->label('Alamat Wali')->limit(30),
                 IconColumn::make('status')
                     ->label('Status')
                     ->boolean()
@@ -172,6 +175,32 @@ class StudentResource extends Resource
                 ]),
             ]);
     }
+
+    protected static function getFilteredStudentQuery()
+    {
+        $user = auth()->user();
+        $guruId = optional($user->guru)->id;
+
+        if (!$guruId) {
+            // Tidak ada guru login, return kosong
+            return Student::query()->whereRaw('1 = 0');
+        }
+
+        // Ambil classroom_id yang diampu guru tersebut
+        $classroomIds = \App\Models\Classroom::whereHas('gurus', function ($query) use ($guruId) {
+            $query->where('guru_id', $guruId);
+        })->pluck('id');
+
+        // Ambil academic year aktif, kalau kamu pakai itu
+        $activeYearId = \App\Models\AcademicYear::where('is_active', true)->value('id');
+
+        return \App\Models\Student::whereHas('studentClassrooms', function ($query) use ($classroomIds, $activeYearId) {
+            $query->whereIn('classroom_id', $classroomIds)
+                ->when($activeYearId, fn($q) => $q->where('academic_year_id', $activeYearId));
+        });
+    }
+
+
 
     // public static function getEloquentQuery(): Builder
     // {

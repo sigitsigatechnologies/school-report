@@ -12,6 +12,7 @@ class MasterMateri extends Model
         'mata_pelajaran',
         'classroom_id',
         'academic_year_id',
+        'kategori_materi_id',
         'status',
     ];
 
@@ -28,5 +29,10 @@ class MasterMateri extends Model
     public function academicYear()
     {
         return $this->belongsTo(AcademicYear::class);
+    }
+
+    public function kategori()
+    {
+        return $this->belongsTo(KategoriMateris::class, 'kategori_materi_id');
     }
 }

@@ -182,7 +182,7 @@ class ProjectsResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('title_project')->label('Judul Proyek'),
+                TextColumn::make('title_project')->label('Judul Proyek')->searchable(),
                 TextColumn::make('detail.header.fase')->label('Fase'),
                 TextColumn::make('detail.header.classroom.name')->label('Kelas'),
                 TextColumn::make('detail.title')->label('Judul Detail'),

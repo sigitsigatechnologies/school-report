@@ -42,7 +42,7 @@ class SubElementResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('Sub Element'),
+                TextColumn::make('name')->label('Sub Element')->searchable(),
                 TextColumn::make('created_at')->label('Created at'),
                 TextColumn::make('updated_at')->label('Updated at'),
             ])

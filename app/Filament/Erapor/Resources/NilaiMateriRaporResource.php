@@ -41,17 +41,20 @@ class NilaiMateriRaporResource extends Resource
                     ->reactive()
                     ->getOptionLabelFromRecordUsing(fn($record) => $record->student->nama)
                     ->options(function (callable $get) {
-                        $usedIds = \App\Models\NilaiMateriRapor::pluck('student_classroom_id')->toArray();
+                        $guruId = auth()->user()->guru?->id;
 
+                        $usedIds = \App\Models\NilaiMateriRapor::pluck('student_classroom_id')->toArray();
                         $currentId = $get('student_classroom_id');
 
-                        // Hapus currentId dari usedIds agar tetap tampil di dropdown saat edit
                         if ($currentId) {
                             $usedIds = array_diff($usedIds, [$currentId]);
                         }
 
                         return \App\Models\StudentClassroom::whereNotIn('id', $usedIds)
-                            ->with('student', 'classroom')
+                            ->whereHas('student', function ($query) use ($guruId) {
+                                $query->where('wali_id', $guruId);
+                            })
+                            ->with(['student', 'classroom'])
                             ->get()
                             ->mapWithKeys(fn($sc) => [
                                 $sc->id => "{$sc->student->nama} - kelas {$sc->classroom->name}"
@@ -60,11 +63,11 @@ class NilaiMateriRaporResource extends Resource
                     ->placeholder('Pilih siswa')
                     ->searchable()
                     ->disablePlaceholderSelection()
-                    ->afterStateUpdated(
-                        fn($state, callable $set) =>
-                        $set('semester', optional(\App\Models\StudentClassroom::find($state)?->academicYear)->semester)
-                    )
-                    ->disabled(fn(?string $context) => $context === 'edit'),
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        $semester = optional(\App\Models\StudentClassroom::find($state)?->academicYear)->semester;
+                        $set('semester', $semester);
+                    }),
+
 
 
                 Select::make('naik_kelas')
@@ -172,7 +175,7 @@ class NilaiMateriRaporResource extends Resource
         return $table
             ->columns(array_merge(
                 [
-                    TextColumn::make('studentClassroom.student.nama')->label('Nama Siswa'),
+                    TextColumn::make('studentClassroom.student.nama')->label('Nama Siswa')->searchable(),
                     TextColumn::make('semester')->label('Semester'),
                 ],
                 collect($mapels)->map(function ($namaMapel, $id) {

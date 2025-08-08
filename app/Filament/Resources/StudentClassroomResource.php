@@ -11,6 +11,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -39,8 +40,11 @@ class StudentClassroomResource extends Resource
 
                 Select::make('academic_year_id')
                     ->label('Academic Year')
-                    ->relationship('academicYear', 'tahun_ajaran') // pastikan 'name' adalah field labelnya
+                    ->options(
+                        \App\Models\AcademicYear::where('is_active', true)->pluck('tahun_ajaran', 'id')
+                    )
                     ->required(),
+                
                 Select::make('wali_id')
                     ->label('Wali')
                     ->relationship('wali', 'name')
@@ -61,7 +65,9 @@ class StudentClassroomResource extends Resource
                 TextColumn::make('wali.name')->label('Wali Kelas'),
             ])
             ->filters([
-                //
+                SelectFilter::make('academic_year_id')
+                ->label('Tahun Ajaran')
+                ->relationship('academicYear', 'tahun_ajaran'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

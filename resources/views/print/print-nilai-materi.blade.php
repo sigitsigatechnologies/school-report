@@ -115,14 +115,36 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($rapor->details as $detail)
+            {{-- @foreach ($rapor->details as $detail)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $detail->masterMateri->mata_pelajaran ?? '—' }}</td>
                     <td style="text-align: center">{{ $detail->nilai ?? '—' }}</td>
                     <td>{{ $detail->capaian_kompetensi ?? '—' }}</td>
                 </tr>
+            @endforeach --}}
+
+            @php
+                $grouped = $rapor->details->groupBy(fn($item) => $item->masterMateri->kategori?->nama);
+            @endphp
+
+            @foreach ($grouped as $kategoriNama => $details)
+                @if ($kategoriNama)
+                    <tr>
+                        <td colspan="4"><strong>{{ $kategoriNama }}</strong></td>
+                    </tr>
+                @endif
+
+                @foreach ($details as $index => $detail)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $detail->masterMateri->mata_pelajaran }}</td>
+                        <td>{{ $detail->nilai }}</td>
+                        <td>{{ $detail->capaian_kompetensi ?? '—' }}</td>
+                    </tr>
+                @endforeach
             @endforeach
+
         </tbody>
     </table>
 

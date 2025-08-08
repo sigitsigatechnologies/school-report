@@ -3,20 +3,15 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjectScoreResource\Pages;
-use App\Filament\Resources\ProjectScoreResource\RelationManagers;
 use App\Models\ParameterPenilaian;
 use App\Models\ProjectDetail;
 use App\Models\Projects;
 use App\Models\ProjectScore;
 use App\Models\ProjectScoreDetail;
-use App\Models\Student;
-use Filament\Forms;
-use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -25,10 +20,6 @@ use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Log;
-use Nette\Utils\Html;
 
 class ProjectScoreResource extends Resource
 {
@@ -43,15 +34,59 @@ class ProjectScoreResource extends Resource
         return $form
             ->schema([
 
-                Select::make('project_id')
-                    ->relationship('project', 'title_project')
+                // Select::make('project_id')
+                //     ->relationship('project', 'title_project')
+                //     ->searchable()
+                //     ->required()
+                //     ->reactive()
+                //     ->afterStateHydrated(function (callable $set, $state) {
+                //         // Set project_id saat edit
+                //         $set('project_id', $state);
+                //     }),
+
+                Select::make('classroom_id')
+                    ->label('Pilih Kelas')
+                    ->options(function () {
+                        $guru = auth()->user()->guru;
+
+                        if (!$guru) {
+                            return [];
+                        }
+
+                        return $guru->classrooms()
+                            ->select('classrooms.id', 'classrooms.name')
+                            ->pluck('classrooms.name', 'classrooms.id');
+                    })
                     ->searchable()
                     ->required()
                     ->reactive()
-                    ->afterStateHydrated(function (callable $set, $state) {
-                        // Set project_id saat edit
-                        $set('project_id', $state);
+                    ->afterStateHydrated(function (callable $set, $state, $record) {
+                        // Kalau record ada (edit mode), ambil classroom_id dari project
+                        if ($record && $record->project) {
+                            $record->loadMissing('project.studentClassroom.classroom');
+                            $set('classroom_id', $record->project->studentClassroom?->classroom_id);
+                        }
                     }),
+
+                Select::make('project_id')
+                    ->label('Pilih Proyek')
+                    ->options(function (callable $get) {
+                        $classroomId = $get('classroom_id');
+                        // dd($classroomId);
+                        if (!$classroomId) {
+                            return [];
+                        }
+                        return \App\Models\Projects::whereHas('studentClassroom', function ($query) use ($classroomId) {
+                            $query->where('classroom_id', $classroomId);
+                        })
+                            ->pluck('title_project', 'id');
+                    })
+                    ->searchable()
+                    ->required()
+                    ->reactive()
+                    ->afterStateHydrated(fn(callable $set, $state) => $set('project_id', $state)),
+
+
                 Section::make('Informasi Proyek')
                     ->schema(function (callable $get) {
                         $projectId = $get('project_id');
@@ -112,10 +147,15 @@ class ProjectScoreResource extends Resource
 
                         $classroom = $project?->detail?->header?->classroom;
 
+                        // $students = $classroom?->studentClassrooms
+                        //     ->filter(fn($sc) => $sc->wali_id === $guruId)
+                        //     ->map(fn($sc) => $sc->student)
+                        //     ->filter();
+
                         $students = $classroom?->studentClassrooms
-                            ->filter(fn($sc) => $sc->wali_id === $guruId)
                             ->map(fn($sc) => $sc->student)
                             ->filter();
+
 
 
 
@@ -264,7 +304,7 @@ class ProjectScoreResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('project.title_project')->label('Judul Proyek'),
+                Tables\Columns\TextColumn::make('project.title_project')->label('Judul Proyek')->searchable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->label('Creation at'),
                 Tables\Columns\TextColumn::make('updated_at')->dateTime()->label('Updated at'),
             ])

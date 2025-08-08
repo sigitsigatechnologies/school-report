@@ -81,7 +81,7 @@ class SchoolProfileResource extends Resource
                 TextColumn::make('kelas'),
                 TextColumn::make('fase'),
                 TextColumn::make('semester'),
-                TextColumn::make('tahun_ajaran'),
+                TextColumn::make('academicYear.tahun_ajaran'),
             ])
             ->filters([
                 //

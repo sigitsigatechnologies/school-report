@@ -59,7 +59,7 @@ class MasterUnitMateriResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('masterMateri.mata_pelajaran')->label('Mata Pelajaran'),
+                TextColumn::make('masterMateri.mata_pelajaran')->label('Mata Pelajaran')->searchable(),
                 TextColumn::make('unit_materi')->label('Unit Materi'),
             ])
             ->filters([

@@ -55,7 +55,7 @@ class CapaianFaseResource extends Resource
             ->columns([
                 TextColumn::make('fase')->label('Fase')->wrap(),
                 TextColumn::make('subElement.name')->label('sub element')->wrap(),
-                TextColumn::make('description')->label('Deskripsi capian'),
+                TextColumn::make('description')->label('Deskripsi capian')->searchable(),
                 TextColumn::make('created_at')->label('Created at'),
                 TextColumn::make('updated_at')->label('Updated at'),
             ])

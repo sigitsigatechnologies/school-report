@@ -38,7 +38,7 @@ class DimensionResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('Dimensi'),
+                TextColumn::make('name')->label('Dimensi')->searchable(),
 
                 TextColumn::make('elements.name')
                     ->label('Elemen')

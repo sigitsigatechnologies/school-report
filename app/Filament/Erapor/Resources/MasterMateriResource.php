@@ -40,35 +40,49 @@ class MasterMateriResource extends Resource
                         TextInput::make('mata_pelajaran')
                             ->label('Mata Pelajaran')
                             ->required(),
-    
+                        Select::make('kategori_id')
+                            ->label('Kategori Materi')
+                            ->relationship('kategori', 'nama')
+                            ->required(),
+
                         Select::make('classroom_id')
                             ->label('Kelas')
                             ->options(function () {
                                 $user = auth()->user();
-    
+
                                 if ($user->hasRole('guru')) {
                                     return $user->guru->classrooms->pluck('name', 'id');
                                 }
-    
+
                                 return Classroom::pluck('name', 'id');
                             })
                             ->required()
                             ->reactive(),
+                        // Select::make('academic_year_id')
+                        //     ->label('Tahun Ajaran')
+                        //     ->relationship('academicYear', 'tahun_ajaran')
+                        //     ->required(),
+
                         Select::make('academic_year_id')
-                            ->label('Tahun Ajaran')
-                            ->relationship('academicYear', 'tahun_ajaran')
-                            ->required(),
+                            ->label('Tahun Ajaran & Semester')
+                            ->relationship(
+                                name: 'academicYear',
+                                titleAttribute: 'id',
+                                modifyQueryUsing: fn($query) => $query->where('is_active', true),
+                            )
+                            ->getOptionLabelFromRecordUsing(fn($record) => $record->label)
+                            ->required()
                     ]),
                 ]),
 
                 Toggle::make('status')
-                ->label('Status Mata Pelajaran')
-                ->inline()
-                ->onColor('success')
-                ->offColor('gray')
-                ->default(true)
-                ->helperText('Hijau = Aktif, Abu-abu = Tidak Aktif'),
-                
+                    ->label('Status Mata Pelajaran')
+                    ->inline()
+                    ->onColor('success')
+                    ->offColor('gray')
+                    ->default(true)
+                    ->helperText('Hijau = Aktif, Abu-abu = Tidak Aktif'),
+
             ]);
     }
 
@@ -77,7 +91,7 @@ class MasterMateriResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('mata_pelajaran')->label('Mata Pelajaran')->searchable(),
-                // TextColumn::make('classroom.name')->label('Kelas'),
+                TextColumn::make('classroom.name')->label('Kelas'),
                 TextColumn::make('academicYear.tahun_ajaran')->label('Tahun Ajaran'),
                 BadgeColumn::make('status')
                     ->label('Status')
@@ -130,5 +144,4 @@ class MasterMateriResource extends Resource
             'edit' => Pages\EditMasterMateri::route('/{record}/edit'),
         ];
     }
-
 }
