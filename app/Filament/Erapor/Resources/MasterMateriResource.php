@@ -40,17 +40,31 @@ class MasterMateriResource extends Resource
                         TextInput::make('mata_pelajaran')
                             ->label('Mata Pelajaran')
                             ->required(),
-                        Select::make('kategori_id')
+                        Select::make('kategori_materi_id')
                             ->label('Kategori Materi')
-                            ->relationship('kategori', 'nama')
-                            ->required(),
+                            ->relationship('kategori', 'nama'),
+                            // ->required(),
+
+                        // Select::make('classroom_id')
+                        //     ->label('Kelas')
+                        //     ->options(function () {
+                        //         $user = auth()->user();
+
+                        //         if ($user->hasRole('guru')) {
+                        //             return $user->guru->classrooms->pluck('name', 'id');
+                        //         }
+
+                        //         return Classroom::pluck('name', 'id');
+                        //     })
+                        //     ->required()
+                        //     ->reactive(),
 
                         Select::make('classroom_id')
                             ->label('Kelas')
                             ->options(function () {
                                 $user = auth()->user();
 
-                                if ($user->hasRole('guru')) {
+                                if ($user->hasRole('guru') && $user->guru) {
                                     return $user->guru->classrooms->pluck('name', 'id');
                                 }
 
@@ -58,6 +72,7 @@ class MasterMateriResource extends Resource
                             })
                             ->required()
                             ->reactive(),
+
                         // Select::make('academic_year_id')
                         //     ->label('Tahun Ajaran')
                         //     ->relationship('academicYear', 'tahun_ajaran')
@@ -120,21 +135,36 @@ class MasterMateriResource extends Resource
         ];
     }
 
+    // public static function getEloquentQuery(): Builder
+    // {
+    //     $query = parent::getEloquentQuery();
+
+    //     $user = Auth::user();
+
+    //     if ($user->hasRole('guru')) {
+    //         $guru = $user->guru; // pastikan relasi `guru` ada di model User
+    //         $classroomIds = $guru->classrooms->pluck('id');
+
+    //         $query->whereIn('classroom_id', $classroomIds);
+    //     }
+
+    //     return $query;
+    // }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
 
         $user = Auth::user();
 
-        if ($user->hasRole('guru')) {
-            $guru = $user->guru; // pastikan relasi `guru` ada di model User
-            $classroomIds = $guru->classrooms->pluck('id');
-
+        if ($user->hasRole('guru') && $user->guru) {
+            $classroomIds = $user->guru->classrooms->pluck('id');
             $query->whereIn('classroom_id', $classroomIds);
         }
 
         return $query;
     }
+
 
     public static function getPages(): array
     {

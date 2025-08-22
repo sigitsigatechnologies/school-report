@@ -12,11 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('nilai_materi_rapors', function (Blueprint $table) {
-            $table->dropColumn('naik_kelas');
-        });
-
-        Schema::table('nilai_materi_rapors', function (Blueprint $table) {
-            $table->string('naik_kelas')->nullable()->after('student_classroom_id');
+            $table->boolean('naik_kelas')
+              ->nullable();
         });
     }
 
@@ -27,10 +24,6 @@ return new class extends Migration
     {
         Schema::table('nilai_materi_rapors', function (Blueprint $table) {
             $table->dropColumn('naik_kelas');
-        });
-
-        Schema::table('nilai_materi_rapors', function (Blueprint $table) {
-            $table->boolean('naik_kelas')->default(false)->after('student_classroom_id');
         });
     }
 };

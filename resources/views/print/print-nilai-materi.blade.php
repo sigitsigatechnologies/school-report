@@ -5,7 +5,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 11px;
+            font-size: 14px;
             padding: 30px;
         }
 
@@ -108,10 +108,10 @@
     <table class="score-table">
         <thead>
             <tr>
-                <th style="width: 3%; text-align:center">No.</th>
-                <th style="width: 25%; text-align:center">Muatan Pelajaran</th>
-                <th style="width: 8%; text-align:center">Nilai Akhir</th>
-                <th style="text-align:center">Capaian Kompetensi</th>
+                <th style="width: 3%; text-align:center; vertical-align:middle;">No.</th>
+                <th style="width: 25%; text-align:center;  vertical-align:middle;">Muatan Pelajaran</th>
+                <th style="width: 8%; text-align:center;  vertical-align:middle;">Nilai Akhir</th>
+                <th style="text-align:center;  vertical-align:middle;">Capaian Kompetensi</th>
             </tr>
         </thead>
         <tbody>
@@ -125,7 +125,17 @@
             @endforeach --}}
 
             @php
-                $grouped = $rapor->details->groupBy(fn($item) => $item->masterMateri->kategori?->nama);
+                $grouped = $rapor->details
+                    // filter kategori Sains biar hanya Kimia
+                    ->filter(function ($item) {
+                        if ($item->masterMateri->kategori?->nama === 'Sains') {
+                            return $item->masterMateri->mata_pelajaran === 'Kimia';
+                        }
+                        return true; // kategori lain biarin
+                    })
+                    ->groupBy(fn($item) => $item->masterMateri->kategori?->nama);
+
+                $no = 1;
             @endphp
 
             @foreach ($grouped as $kategoriNama => $details)
@@ -135,15 +145,16 @@
                     </tr>
                 @endif
 
-                @foreach ($details as $index => $detail)
+                @foreach ($details as $detail)
                     <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td>{{ $detail->masterMateri->mata_pelajaran }}</td>
-                        <td>{{ $detail->nilai }}</td>
-                        <td>{{ $detail->capaian_kompetensi ?? '—' }}</td>
+                        <td style="text-align:center; vertical-align:middle;">{{ $no++ }}</td>
+                        <td style="text-align:justify; vertical-align:middle;">{{ $detail->masterMateri->mata_pelajaran }}</td>
+                        <td style="text-align:center; vertical-align:middle;">{{ $detail->nilai }}</td>
+                        <td style="text-align:justify; ">{{ $detail->capaian_kompetensi ?? '—' }}</td>
                     </tr>
                 @endforeach
             @endforeach
+
 
         </tbody>
     </table>
@@ -272,7 +283,7 @@
         $tanggalHariIni = Carbon::now()->locale('id')->translatedFormat('d F Y');
     @endphp
     <table style="width: 100%; font-size: 12px; margin-top: 40px;">
-        <tr>
+        <tr style="text-align:center;  vertical-align:middle;">
             <td style="width: 33%;">
                 Mengetahui:<br>
                 Orang Tua / Wali<br><br><br><br>
@@ -286,7 +297,7 @@
                 <strong>{{ $schoolProfile->nip_kepala_sekolah ?? '-' }}</strong>
             </td>
 
-            <td style="width: 33%; text-align: right;">
+            <td style="width: 33%; text-align:center;  vertical-align:middle;">
                 Bantul, {{ $tanggalHariIni }}<br>
                 Wali Kelas,<br><br><br><br>
                 @if ($waliKelas)
@@ -299,9 +310,6 @@
             </td>
         </tr>
     </table>
-
-
-
     </body>
 
 </html>

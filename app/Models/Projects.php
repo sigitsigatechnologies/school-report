@@ -11,7 +11,8 @@ class Projects extends Model
     protected $fillable = [
         'title_project',
         'project_description_detail_id',
-        'student_classroom_id'
+        'student_classroom_id',
+        'academic_year_id'
     ];
 
     public function projectDescription(): BelongsTo
@@ -48,7 +49,4 @@ class Projects extends Model
     {
         return $this->belongsTo(StudentClassroom::class);
     }
-
-
-
 }

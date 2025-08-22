@@ -28,29 +28,88 @@ class StudentClassroomResource extends Resource
     {
         return $form
             ->schema([
+                // Select::make('student_id')
+                //     ->label('Siswa')
+                //     ->required()
+                //     ->options(function () {
+                //         return \App\Models\StudentClassroom::with(['student', 'classroom'])
+                //             ->get()
+                //             ->mapWithKeys(fn($sc) => [
+                //                 $sc->student_id => "{$sc->student->nama} - Kelas {$sc->classroom->name}"
+                //             ]);
+                //     })
+                //     ->searchable()
+                //     ->placeholder('Pilih siswa'),
+
                 Select::make('student_id')
-                    ->label('Student')
-                    ->relationship('student', 'nama')
-                    ->required(),
+                    ->label('Siswa')
+                    ->required()
+                    ->options(function () {
+                        $guru = auth()->user()?->guru;
+
+                        if (! $guru) {
+                            return [];
+                        }
+
+                        // ambil kelas yg dia jadi wali
+                        $waliClassroom = $guru->classrooms()->first(); // relasi guru -> classrooms
+
+                        if (! $waliClassroom) {
+                            return [];
+                        }
+
+                        // ambil siswa hanya dari kelas tsb
+                        return \App\Models\StudentClassroom::with('student')
+                            ->where('classroom_id', $waliClassroom->id)
+                            ->get()
+                            ->mapWithKeys(fn($sc) => [
+                                $sc->student_id => "{$sc->student->nama} - Kelas {$waliClassroom->name}"
+                            ]);
+                    })
+                    ->searchable()
+                    ->placeholder('Pilih siswa'),
 
                 Select::make('classroom_id')
-                    ->label('Classroom')
+                    ->label('Naik Kelas / Tinggal Kelas')
                     ->relationship('classroom', 'name')
                     ->required(),
+
+                // Select::make('academic_year_id')
+                //     ->label('Academic Year')
+                //     ->options(
+                //         \App\Models\AcademicYear::pluck('tahun_ajaran', 'id')
+                //     )
+                //     ->required(),
 
                 Select::make('academic_year_id')
                     ->label('Academic Year')
                     ->options(
-                        \App\Models\AcademicYear::where('is_active', true)->pluck('tahun_ajaran', 'id')
+                        \App\Models\AcademicYear::where('is_active', true)
+                            ->get()
+                            ->mapWithKeys(fn($year) => [
+                                $year->id => "{$year->tahun_ajaran} - Semester {$year->semester}"
+                            ])
+                    )
+                    ->default(
+                        \App\Models\AcademicYear::where('is_active', true)->value('id')
                     )
                     ->required(),
-                
+
+
                 Select::make('wali_id')
                     ->label('Wali')
                     ->relationship('wali', 'name')
-                    ->default(fn () => auth()->user()?->guru?->id)
-                    ->disabled()
-                    ->dehydrated(),
+                    ->getOptionLabelFromRecordUsing(function ($record) {
+                        $kelas = $record->classrooms()
+                            ->pluck('name')
+                            ->unique()
+                            ->join(', ');
+
+                        return "{$record->name} - Wali Kelas {$kelas}";
+                    })
+                    ->default(fn() => auth()->user()?->guru?->id)
+                    ->dehydrated()
+
 
             ]);
     }
@@ -59,15 +118,25 @@ class StudentClassroomResource extends Resource
     {
         return $table
             ->columns([
+                // TextColumn::make('student.nama')->label('Nama Siswa'),
+                // TextColumn::make('classroom.name')->label('Kelas'),
+                // TextColumn::make('academicYear.tahun_ajaran')->label('Tahun Ajaran'),
+                // TextColumn::make('wali.name')->label('Wali Kelas'),
+
                 TextColumn::make('student.nama')->label('Nama Siswa'),
-                TextColumn::make('classroom.name')->label('Kelas'),
+
+                // Kelas sekarang
+                TextColumn::make('classroom.name')
+                    ->label('Kelas Sekarang'),
+
                 TextColumn::make('academicYear.tahun_ajaran')->label('Tahun Ajaran'),
+                TextColumn::make('academicYear.semester')->label('Semester'),
                 TextColumn::make('wali.name')->label('Wali Kelas'),
             ])
             ->filters([
                 SelectFilter::make('academic_year_id')
-                ->label('Tahun Ajaran')
-                ->relationship('academicYear', 'tahun_ajaran'),
+                    ->label('Tahun Ajaran')
+                    ->relationship('academicYear', 'tahun_ajaran'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

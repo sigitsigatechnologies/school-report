@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\ProjectDetail;
 use App\Models\ProjectScore;
 use App\Models\ProjectScoreDetail;
+use App\Models\SchoolProfile;
 use App\Models\Student;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Forms\Components\View;
@@ -122,6 +123,9 @@ class PrintProjectScoreController extends Controller
         $groupedDetails = $scoreDetails->groupBy(function ($detail) {
             return $detail->projectDetail->project->title_project ?? 'Tanpa Judul';
         });
+
+
+        $schoolProfile = SchoolProfile::first();
     
         return Pdf::loadView('print.project-score-per-student', [
             'score' => $score,
@@ -130,6 +134,7 @@ class PrintProjectScoreController extends Controller
             'wali' => $wali,
             'academicYear' => $academicYear,
             'header' => $header,
+            'schoolProfile' => $schoolProfile,
         ])->setPaper('A4', 'portrait')->stream("rapor-{$student->nama}.pdf");
     }
     
@@ -169,12 +174,15 @@ class PrintProjectScoreController extends Controller
         // Grouping data berdasarkan project_score_id (per projek)
         $groupedDetails = $details->groupBy('project_score_id');
 
+        $schoolProfile = SchoolProfile::first();
+
         // Kirim data ke view PDF
         $pdf = Pdf::loadView('print.project-score-student', [
             'student' => $student,
             'groupedDetails' => $groupedDetails,
             'wali' => $wali,
             'academicYear' => $academicYear,
+            'schoolProfile' => $schoolProfile,
         ])->setPaper('A4', 'portrait');
 
         return $pdf->stream("rapor-{$student->nama}.pdf");

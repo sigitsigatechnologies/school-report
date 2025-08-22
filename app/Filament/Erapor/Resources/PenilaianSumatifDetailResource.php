@@ -102,4 +102,9 @@ class PenilaianSumatifDetailResource extends Resource
             'edit' => Pages\EditPenilaianSumatifDetail::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false; // tidak tampil di sidebar
+    }
 }

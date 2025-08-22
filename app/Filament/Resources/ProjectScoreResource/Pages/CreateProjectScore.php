@@ -42,54 +42,57 @@ class CreateProjectScore extends CreateRecord
     // }
 
     protected function afterCreate(): void
-{
-    $projectScore = $this->record;
-    $data = $this->form->getState();
+    {
+        $data = $this->form->getState(); // <--- ambil semua input form
 
-    $projectId = $data['project_id'];
+        $project = $this->record->project()->with([
+            'academicYear',
+            'projectDetails.capaianFase',
+            'detail.header.classroom.studentClassrooms.student',
+            'detail.header.classroom.studentClassrooms.academicYear',
+        ])->first();
 
-    // Ambil detail + capaian
-    $projectDetails = ProjectDetail::with('capaianFase')
-        ->where('project_id', $projectId)
-        ->get();
+        if (!$project) return;
 
-    // Mapping capaian_fase_id → project_detail_id
-    $detailMap = $projectDetails->mapWithKeys(function ($detail) {
-        return [$detail->capaian_fase_id => $detail->id];
-    });
+        $classroom = $project->detail?->header?->classroom;
 
-    // Ambil siswa dari kelas
-    $classroom = $projectScore->project->detail?->header?->classroom;
-    $students = $classroom?->studentClassrooms
-        ->map(fn ($sc) => $sc->student)
-        ->filter();
+        // filter student sesuai tahun ajaran & semester
+        $students = $classroom?->studentClassrooms
+            ->where('academic_year_id', $project->academic_year_id)
+            ->filter(fn($sc) => $sc->academicYear?->semester == $project->academicYear?->semester)
+            ->map(fn($sc) => $sc->student)
+            ->unique('id');
 
-    Log::info('Detail Map:', $detailMap->toArray());
+        // $capaianFases = ProjectDetail::where('project_id', $project->id)
+        //     ->with('capaianFase')
+        //     ->get()
+        //     ->pluck('capaianFase')
+        //     ->filter()
+        //     ->unique('id');
 
-    foreach ($students as $student) {
-        foreach ($detailMap as $capaianFaseId => $projectDetailId) {
-            $fieldKey = "nilai_{$student->id}_{$capaianFaseId}";
-            $parameterId = $data[$fieldKey] ?? null;
+        $projectDetails = ProjectDetail::where('project_id', $project->id)
+            ->with('capaianFase')
+            ->get();
 
-            if ($parameterId) {
-                $projectDetailId = $detailMap[$capaianFaseId] ?? null;
 
-                Log::info("Saving score", [
-                    'student_id' => $student->id,
-                    'capaian_fase_id' => $capaianFaseId,
-                    'parameter_penilaian_id' => $parameterId,
-                    'project_detail_id' => $projectDetailId,
-                ]);
+        // generate detail
+        foreach ($students as $student) {
+            foreach ($projectDetails as $detail) {
+                $capaian = $detail->capaianFase;
+                if (!$capaian) continue;
+        
+                $fieldKey = "nilai_{$student->id}_{$capaian->id}";
+                $parameterId = $data[$fieldKey] ?? null;
+        
                 ProjectScoreDetail::create([
-                    'project_score_id' => $projectScore->id,
-                    'project_detail_id' => $projectDetailId, // ✅ diisi dengan benar
-                    'student_id' => $student->id,
-                    'capaian_fase_id' => $capaianFaseId,
+                    'project_score_id'       => $this->record->id,
+                    'student_id'             => $student->id,
+                    'capaian_fase_id'        => $capaian->id,
                     'parameter_penilaian_id' => $parameterId,
+                    'project_detail_id'      => $detail->id, // ← sudah langsung ada
                 ]);
             }
         }
+        
     }
-}
-
 }

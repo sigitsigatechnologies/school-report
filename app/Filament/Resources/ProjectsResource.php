@@ -65,30 +65,54 @@ class ProjectsResource extends Resource
                 //     ->dehydrated(true)
                 //     ->required(),
 
+                // Select::make('student_classroom_id')
+                //     ->label('Tahun Ajaran')
+                //     ->options(
+                //         StudentClassroom::with('academicYear')
+                //             ->get()
+                //             ->unique('academic_year_id')
+                //             ->mapWithKeys(function ($item) {
+                //                 return [$item->id => $item->academicYear->tahun_ajaran];
+                //             })
+                //     )
+                //     ->dehydrated(true)
+                //     ->required(),
+
                 Select::make('student_classroom_id')
-                    ->label('Tahun Ajaran')
+                    ->label('Tahun Ajaran & Kelas')
                     ->options(
-                        StudentClassroom::with('academicYear')
+                        StudentClassroom::with(['academicYear', 'classroom'])
+                            ->whereHas('academicYear', fn($q) => $q->where('is_active', true)) // filter yg active
                             ->get()
-                            ->unique('academic_year_id')
                             ->mapWithKeys(function ($item) {
-                                return [$item->id => $item->academicYear->tahun_ajaran];
+                                return [
+                                    $item->id => "{$item->academicYear->tahun_ajaran} - {$item->classroom->name}"
+                                ];
                             })
                     )
-                    ->dehydrated(true)
-                    ->required(),
+                    ->required()
+                    ->reactive(),
+                Hidden::make('academic_year_id')
+                    ->default(function (callable $get) {
+                        $studentClassroomId = $get('student_classroom_id');
+                        return StudentClassroom::where('id', $studentClassroomId)->value('academic_year_id');
+                    })
+                    ->dehydrated(),
+
                 Select::make('project_description_detail_id')
                     ->label('Pilih Judul Proyek dari Deskripsi')
                     ->options(function () {
                         $user = auth()->user();
-                
+
                         if (!$user->hasRole('guru')) {
                             return \App\Models\ProjectDescriptionDetails::with('header')->get()->pluck('title', 'id');
                         }
-                
+
                         $classroomIds = $user->guru->classrooms->pluck('id');
-                
-                        return \App\Models\ProjectDescriptionDetails::whereHas('header.studentClassroom', fn($q) =>
+
+                        return \App\Models\ProjectDescriptionDetails::whereHas(
+                            'header.studentClassroom',
+                            fn($q) =>
                             $q->whereIn('classroom_id', $classroomIds)
                         )->pluck('title', 'id');
                     })
@@ -97,22 +121,20 @@ class ProjectsResource extends Resource
                     ->reactive()
                     ->afterStateUpdated(function (callable $set, $state) {
                         $detail = \App\Models\ProjectDescriptionDetails::with('header.studentClassroom.classroom')->find($state);
-                
+
                         $set('fase', $detail?->header?->fase);
                         $set('classroom', $detail?->header?->studentClassroom?->classroom?->name);
-                
+
                         $studentClassroomId = optional($detail?->header)->student_classroom_id;
                         $set('student_classroom_id', $studentClassroomId);
-
                     })
                     ->afterStateHydrated(function (callable $get, callable $set) {
                         $detail = \App\Models\ProjectDescriptionDetails::with('header.studentClassroom.classroom')->find($get('project_description_detail_id'));
-                
+
                         $set('fase', $detail?->header?->fase);
                         $set('classroom', $detail?->header?->studentClassroom?->classroom?->name);
                         $studentClassroomId = optional($detail?->header)->student_classroom_id;
                         $set('student_classroom_id', $studentClassroomId);
-
                     }),
 
                 Repeater::make('projectDetails')

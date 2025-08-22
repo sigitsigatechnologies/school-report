@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProjectDetail extends Model
 {
-    protected $fillable = ['project_id','dimension_id','element_id','sub_element_id','capaian_fase_id'];
+    protected $fillable = ['project_id', 'dimension_id', 'element_id', 'sub_element_id', 'capaian_fase_id'];
 
     public function project(): BelongsTo
     {
@@ -34,13 +34,13 @@ class ProjectDetail extends Model
         return $this->belongsTo(CapaianFase::class);
     }
 
-    public function header() {
+    public function header()
+    {
         return $this->belongsTo(Projects::class);
     }
-    
+
     public function studentClassroom()
     {
         return $this->belongsTo(StudentClassroom::class);
     }
-
 }

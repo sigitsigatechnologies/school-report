@@ -16,11 +16,12 @@ return new class extends Migration
             $table->foreignId('student_id')->constrained()->onDelete('cascade');
             $table->foreignId('classroom_id')->constrained()->onDelete('cascade');
             $table->foreignId('academic_year_id')->constrained()->onDelete('cascade');
-            $table->unique(['student_id', 'academic_year_id'], 'student_year_unique');
             $table->foreignId('wali_id')->nullable()->constrained('guru')->nullOnDelete();
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.

@@ -5,7 +5,7 @@
             <div class="text-sm text-gray-700 space-y-1">
                 <div><strong>Kelas:</strong> {{ $record->masterMateri->classroom->name }}</div>
                 <div><strong>Mata Pelajaran:</strong> {{ $record->masterMateri->mata_pelajaran }}</div>
-                <div><strong>Semester:</strong> {{ $record->semester }}</div>
+                <div><strong>Semester:</strong> {{ $record->academicYear->semester }}</div>
             </div>
         </x-filament::card>
     </div>

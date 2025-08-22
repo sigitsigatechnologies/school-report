@@ -36,4 +36,11 @@ class PenilaianFormatif extends Model
     {
         return $this->hasMany(PenilaianFormatifDetail::class);
     }
+
+    // App\Models\AcademicYear.php
+    public function getLabelAttribute(): string
+    {
+        return "{$this->tahun} - Semester {$this->semester}";
+    }
+
 }

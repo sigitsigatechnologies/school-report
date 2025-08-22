@@ -42,4 +42,11 @@ class Guru extends Model
     {
         return $this->hasMany(Student::class, 'wali_id');
     }
+
+    // App\Models\Guru.php
+    public function studentClassrooms()
+    {
+        return $this->hasMany(StudentClassroom::class, 'wali_id');
+    }
+
 }

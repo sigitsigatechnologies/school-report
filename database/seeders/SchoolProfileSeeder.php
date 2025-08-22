@@ -32,7 +32,6 @@ class SchoolProfileSeeder extends Seeder
             'kelas' => 'Kelas III (Tiga)',
             'fase' => 'C',
             'semester' => '2 (Dua)',
-            'tahun_ajaran' => '2024/2025',
             'tempat_tanggal_rapor' => 'Bantul, 26 Juni 2025',
         ]);
     }

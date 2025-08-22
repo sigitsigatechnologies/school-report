@@ -176,6 +176,30 @@ class StudentResource extends Resource
             ]);
     }
 
+    // protected static function getFilteredStudentQuery()
+    // {
+    //     $user = auth()->user();
+    //     $guruId = optional($user->guru)->id;
+
+    //     if (!$guruId) {
+    //         // Tidak ada guru login, return kosong
+    //         return Student::query()->whereRaw('1 = 0');
+    //     }
+
+    //     // Ambil classroom_id yang diampu guru tersebut
+    //     $classroomIds = \App\Models\Classroom::whereHas('gurus', function ($query) use ($guruId) {
+    //         $query->where('guru_id', $guruId);
+    //     })->pluck('id');
+
+    //     // Ambil academic year aktif, kalau kamu pakai itu
+    //     $activeYearId = \App\Models\AcademicYear::where('is_active', true)->value('id');
+
+    //     return \App\Models\Student::whereHas('studentClassrooms', function ($query) use ($classroomIds, $activeYearId) {
+    //         $query->whereIn('classroom_id', $classroomIds)
+    //             ->when($activeYearId, fn($q) => $q->where('academic_year_id', $activeYearId));
+    //     });
+    // }
+
     protected static function getFilteredStudentQuery()
     {
         $user = auth()->user();
@@ -191,14 +215,12 @@ class StudentResource extends Resource
             $query->where('guru_id', $guruId);
         })->pluck('id');
 
-        // Ambil academic year aktif, kalau kamu pakai itu
-        $activeYearId = \App\Models\AcademicYear::where('is_active', true)->value('id');
-
-        return \App\Models\Student::whereHas('studentClassrooms', function ($query) use ($classroomIds, $activeYearId) {
-            $query->whereIn('classroom_id', $classroomIds)
-                ->when($activeYearId, fn($q) => $q->where('academic_year_id', $activeYearId));
+        // Ambil semua student yang pernah masuk ke classroom yang dia ampu (tanpa filter tahun ajaran)
+        return \App\Models\Student::whereHas('studentClassrooms', function ($query) use ($classroomIds) {
+            $query->whereIn('classroom_id', $classroomIds);
         });
     }
+
 
 
 

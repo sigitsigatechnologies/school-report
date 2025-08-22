@@ -3,6 +3,7 @@
 namespace App\Filament\Erapor\Resources;
 
 use App\Filament\Erapor\Resources\NilaiMateriRaporResource\Pages;
+use App\Models\Guru;
 use App\Models\MasterMateri;
 use App\Models\NilaiMateriRapor;
 use App\Models\StudentClassroom;
@@ -41,33 +42,45 @@ class NilaiMateriRaporResource extends Resource
                     ->reactive()
                     ->getOptionLabelFromRecordUsing(fn($record) => $record->student->nama)
                     ->options(function (callable $get) {
-                        $guruId = auth()->user()->guru?->id;
+                        $user = auth()->user();
+                        $guruId = optional($user->guru)->id;
 
+                        if (!$guruId) {
+                            return [];
+                        }
+
+                        // Ambil classroom_id yang diampu guru
+                        $classroomIds = \App\Models\Classroom::whereHas('gurus', function ($q) use ($guruId) {
+                            $q->where('guru_id', $guruId);
+                        })->pluck('id');
+
+                        // Ambil semua student_classroom dari kelas yang diampu guru tsb
+                        $query = \App\Models\StudentClassroom::whereIn('classroom_id', $classroomIds)
+                            ->with(['student', 'classroom']);
+
+                        // Cek siswa yang sudah pernah dipakai
                         $usedIds = \App\Models\NilaiMateriRapor::pluck('student_classroom_id')->toArray();
-                        $currentId = $get('student_classroom_id');
 
+                        $currentId = $get('student_classroom_id');
                         if ($currentId) {
                             $usedIds = array_diff($usedIds, [$currentId]);
                         }
 
-                        return \App\Models\StudentClassroom::whereNotIn('id', $usedIds)
-                            ->whereHas('student', function ($query) use ($guruId) {
-                                $query->where('wali_id', $guruId);
-                            })
-                            ->with(['student', 'classroom'])
-                            ->get()
-                            ->mapWithKeys(fn($sc) => [
-                                $sc->id => "{$sc->student->nama} - kelas {$sc->classroom->name}"
-                            ]);
+                        $query->whereNotIn('id', $usedIds);
+
+                        return $query->get()->mapWithKeys(fn($sc) => [
+                            $sc->id => "{$sc->student->nama} - kelas {$sc->classroom->name}"
+                        ]);
                     })
                     ->placeholder('Pilih siswa')
                     ->searchable()
                     ->disablePlaceholderSelection()
-                    ->afterStateUpdated(function ($state, callable $set) {
-                        $semester = optional(\App\Models\StudentClassroom::find($state)?->academicYear)->semester;
-                        $set('semester', $semester);
-                    }),
+                    ->afterStateUpdated(
+                        fn($state, callable $set) =>
+                        $set('semester', optional(\App\Models\StudentClassroom::find($state)?->academicYear)->semester)
+                    ),
 
+                // ->disabled(fn(?string $context) => $context === 'edit'),
 
 
                 Select::make('naik_kelas')
@@ -164,18 +177,28 @@ class NilaiMateriRaporResource extends Resource
     {
         // Ambil semua mapel (misalnya berdasarkan kelas atau global)
         // $mapels = MasterMateri::pluck('mata_pelajaran', 'id');
-        $mapels = MasterMateri::whereHas('classroom', function ($query) {
-            $query->whereHas('gurus', function ($q) {
-                $q->where('guru_id', auth()->id());
-            });
-        })->pluck('mata_pelajaran', 'id');
+
+        // $mapels = MasterMateri::whereHas('classroom', function ($query) {
+        //     $query->whereHas('gurus', function ($q) {
+        //         $q->where('guru_id', auth()->id());
+        //     });
+        // })->pluck('mata_pelajaran', 'id');
+
+
+        $guru = Guru::where('user_id', auth()->id())->with('classrooms')->first();
+
+        $mapels = MasterMateri::whereIn('classroom_id', $guru?->classrooms->pluck('id') ?? [])
+            ->pluck('mata_pelajaran', 'id');
+
+
+        // dd($guruId);
 
         Log::info('Mapels found:', $mapels->toArray());
 
         return $table
             ->columns(array_merge(
                 [
-                    TextColumn::make('studentClassroom.student.nama')->label('Nama Siswa')->searchable(),
+                    TextColumn::make('studentClassroom.student.nama')->label('Nama Siswa'),
                     TextColumn::make('semester')->label('Semester'),
                 ],
                 collect($mapels)->map(function ($namaMapel, $id) {

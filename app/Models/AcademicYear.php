@@ -34,4 +34,9 @@ class AcademicYear extends Model
                 : 'Genap';
         });
     }
+
+    public function projects()
+    {
+        return $this->hasMany(Projects::class);
+    }
 }

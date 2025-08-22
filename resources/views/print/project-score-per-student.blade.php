@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 11px;
+            font-size: 14px;
             margin: 30px;
         }
 
@@ -92,16 +92,13 @@
         </tr>
         <tr>
             <td>Nama Sekolah</td>
-            <td>: SD BOPKRI Turen (Pelangi) Bantul</td>
+            <td>: {{ $schoolProfile->nama_sekolah}}</td>
             <td>TA</td>
-            <td>: {{ $academicYear ?? '-' }}</td>
+            <td>: {{ $score->project->academicYear->tahun_ajaran ?? '-' }}</td>
         </tr>
         <tr>
             <td>Alamat Sekolah</td>
-            <td colspan="3">: Jl. Mgr. Sugiyo Pranoto No. SJ169, Area Sawah, </br>
-                Trirenggo, Kec. Bantul, Kabupaten Bantul, Daerah Istimewa Yogyakarta 55714
-                Phone: 0852-0034-9152
-            </td>
+            <td colspan="3">: {{ $schoolProfile->alamat}}</td>
         </tr>
     </table>
 
@@ -225,8 +222,8 @@
                 NIP {{ $wali->nip ?? '-' }}<br>
             </td>
             <td style="padding-top: 60px;">
-                Suparman, M.Pd<br>
-                NIP 1977888889999999
+                {{ $schoolProfile->kepala_sekolah}}<br>
+                {{ $schoolProfile->nip_kepala_sekolah}}
             </td>
         </tr>
     </table>
