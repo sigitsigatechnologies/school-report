@@ -92,7 +92,7 @@ class NilaiMateriRaporResource extends Resource
                             return [];
                         }
 
-                        $studentClassroom = \App\Models\StudentClassroom::with('classroom')->find($studentClassroomId);
+                        $studentClassroom = StudentClassroom::with('classroom')->find($studentClassroomId);
 
                         if (!$studentClassroom || !$studentClassroom->classroom) {
                             return [];

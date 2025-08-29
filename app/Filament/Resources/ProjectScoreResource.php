@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjectScoreResource\Pages;
 use App\Models\AcademicYear;
+use App\Models\Classroom;
 use App\Models\ParameterPenilaian;
 use App\Models\ProjectDetail;
 use App\Models\Projects;
@@ -12,7 +13,6 @@ use App\Models\ProjectScoreDetail;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Group;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -36,16 +36,6 @@ class ProjectScoreResource extends Resource
         return $form
             ->schema([
 
-                // Select::make('project_id')
-                //     ->relationship('project', 'title_project')
-                //     ->searchable()
-                //     ->required()
-                //     ->reactive()
-                //     ->afterStateHydrated(function (callable $set, $state) {
-                //         // Set project_id saat edit
-                //         $set('project_id', $state);
-                //     }),
-
                 Select::make('classroom_id')
                     ->label('Pilih Kelas')
                     ->options(function () {
@@ -56,73 +46,58 @@ class ProjectScoreResource extends Resource
                         }
 
                         return $guru->classrooms()
-                            ->select('classrooms.id', 'classrooms.name')
-                            ->pluck('classrooms.name', 'classrooms.id');
+                            ->select('classrooms.id', 'classrooms.name') // <-- tabelnya disebutkan
+                            ->pluck('name', 'id'); // ambil name sebagai label, id sebagai value
                     })
-                    ->searchable()
                     ->required()
                     ->reactive()
-                    ->afterStateHydrated(function (callable $set, $state, $record) {
-                        // Kalau record ada (edit mode), ambil classroom_id dari project
-                        if ($record && $record->project) {
-                            $record->loadMissing('project.studentClassroom.classroom');
-                            $set('classroom_id', $record->project->studentClassroom?->classroom_id);
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state) {
+                            $classroom = \App\Models\Classroom::with('academicYear')->find($state);
+                            if ($classroom && $classroom->academicYear) {
+                                $set('academic_year_id', $classroom->academicYear->id);
+                            }
                         }
                     }),
-
-                // Select::make('project_id')
-                //     ->label('Pilih Proyek')
-                //     ->options(function (callable $get) {
-                //         $classroomId = $get('classroom_id');
-                //         // dd($classroomId);
-                //         if (!$classroomId) {
-                //             return [];
-                //         }
-                //         return \App\Models\Projects::whereHas('studentClassroom', function ($query) use ($classroomId) {
-                //             $query->where('classroom_id', $classroomId);
-                //         })
-                //             ->pluck('title_project', 'id');
-                //     })
-                //     ->searchable()
-                //     ->required()
-                //     ->reactive()
-                //     ->afterStateHydrated(fn(callable $set, $state) => $set('project_id', $state)),
-
-
                 Select::make('academic_year_id')
                     ->label('Tahun Ajaran & Semester')
                     ->options(
                         AcademicYear::where('is_active', true)
                             ->get()
                             ->mapWithKeys(fn($item) => [
-                                $item->id => "{$item->tahun_ajaran} - Semester {$item->semester}"
+                                $item->id => "{$item->tahun_ajaran}"
                             ])
                     )
                     ->required()
-                    ->reactive(),
-
+                    ->default(function (callable $get) {
+                        $classroomId = $get('classroom_id');
+                        if ($classroomId) {
+                            return \App\Models\Classroom::find($classroomId)?->academic_year_id;
+                        }
+                        return null;
+                    }),
 
 
                 Select::make('project_id')
                     ->label('Pilih Proyek')
                     ->options(function (callable $get) {
                         $classroomId = $get('classroom_id');
-                        $academicYearId = $get('academic_year_id');
+                        if (!$classroomId) return [];
 
-                        if (!$classroomId || !$academicYearId) {
-                            return [];
-                        }
-
-                        return \App\Models\Projects::query()
-                            ->where('academic_year_id', $academicYearId)
-                            ->whereHas('studentClassroom', function ($query) use ($classroomId) {
-                                $query->where('classroom_id', $classroomId);
-                            })
+                        return \App\Models\Projects::whereHas(
+                            'detail.header',
+                            fn($q) =>
+                            $q->where('classroom_id', $classroomId)
+                        )
                             ->pluck('title_project', 'id');
                     })
+                    ->required()
                     ->reactive()
-                    ->required(),
-
+                    ->afterStateHydrated(function ($state, callable $set, $record) {
+                        if ($record && $record->project_id) {
+                            $set('project_id', $record->project_id);
+                        }
+                    }),
 
 
                 Section::make('Informasi Proyek')
@@ -137,7 +112,7 @@ class ProjectScoreResource extends Resource
                         // if (!$project) return [];
 
                         $classroom = $project?->detail?->header?->classroom;
-                        $tahunAjaran = $classroom?->studentClassrooms->first()?->academicYear?->tahun_ajaran ?? '-';
+                        // dd($classroom);
                         $semester = $project?->academicYear?->semester ?? '-';
                         return [
                             Placeholder::make('judul')
@@ -152,11 +127,11 @@ class ProjectScoreResource extends Resource
 
                             Placeholder::make('tahun_ajaran')
                                 ->label('Tahun Ajaran')
-                                ->content($tahunAjaran ?? '-'),
+                                ->content($classroom->academicYear->tahun_ajaran ?? '-'),
 
                             Placeholder::make('semester')
                                 ->label('Semester')
-                                ->content($semester),
+                                ->content($classroom->academicYear->semester),
 
                             Placeholder::make('fase')
                                 ->label('Fase')
@@ -183,43 +158,21 @@ class ProjectScoreResource extends Resource
                             ];
                         }
 
-                        // Load data siswa dan capaian
-                        // $project = Projects::with('detail.header.classroom')->find($projectId);
-                        // $project = Projects::with('detail.header.classroom')->find($projectId);
-
-                        $guruId = auth()->user()->guru->id;
-
-                        // $project = Projects::with([
-                        //     'detail.header.classroom.studentClassrooms.student'
-                        // ])->find($projectId);
-
                         $project = Projects::with([
                             'academicYear',
-                            'detail.header.classroom.studentClassrooms.student',
-                            'detail.header.classroom.studentClassrooms.academicYear',
+                            'detail.header.classroom.studentClassrooms.student' // sudah eager load student
                         ])->find($projectId);
 
                         $classroom = $project?->detail?->header?->classroom;
 
-                        // $students = $classroom?->studentClassrooms
-                        //     ->filter(fn($sc) => $sc->wali_id === $guruId)
-                        //     ->map(fn($sc) => $sc->student)
-                        //     ->filter();
-
-                        // $students = $classroom?->studentClassrooms
-                        //     ->map(fn($sc) => $sc->student)
-                        //     ->filter();
-
+                        // Ambil semua siswa langsung dari relasi
                         $students = $classroom?->studentClassrooms
-                            ->where('academic_year_id', $project->academic_year_id)
-                            ->filter(fn($sc) => $sc->academicYear?->semester == $project->academicYear?->semester)
-                            ->map(fn($sc) => $sc->student)
-                            ->unique('id');
-
-
-
+                            ->pluck('student')    // langsung ambil relasi student
+                            ->unique('id');       // hapus duplikat
 
                         // dd($students);
+
+
                         // $students = Student::where('classroom_id', $classroomId)->get();
                         $details = ProjectDetail::where('project_id', $projectId)->with('capaianFase')->get();
                         $capaianFases = $details->pluck('capaianFase')->filter()->unique('id');
@@ -312,18 +265,7 @@ class ProjectScoreResource extends Resource
                                                     'capaian_fase_id' => $capaian->id,
                                                 ])->value('note_project');
 
-                                                // cari project_detail_id untuk student + capaian ini
-                                                $projectDetailId = \App\Models\ProjectDetail::where('capaian_fase_id', $capaian->id)
-                                                    ->where('project_id', $record?->project_id ?? request()->input('project_id'))
-                                                    ->value('id');
-
                                                 return Group::make([
-
-                                                    // Hidden untuk simpan project_detail_id
-                                                    Hidden::make("detailIds.{$student->id}_{$capaian->id}")
-                                                        ->default($projectDetailId)
-                                                        ->dehydrated(),
-
                                                     Textarea::make("noteInputs.{$student->id}_{$capaian->id}")
                                                         ->label('')
                                                         ->visible(false)
@@ -376,23 +318,49 @@ class ProjectScoreResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('project.title_project')->label('Judul Proyek')->searchable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->label('Creation at'),
+                Tables\Columns\TextColumn::make('created_at')->dateTime()->label('Created at'),
                 Tables\Columns\TextColumn::make('updated_at')->dateTime()->label('Updated at'),
+                Tables\Columns\TextColumn::make('project.projectDescriptionThroughDetail.academicYear.tahun_ajaran')
+                    ->label('Tahun Ajaran'),
+                Tables\Columns\TextColumn::make('project.projectDescriptionThroughDetail.academicYear.semester')
+                    ->label('Semester'),
+
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->disabled(fn($record) => !($record->project?->projectDescriptionThroughDetail?->academicYear?->is_active ?? false)),
                 Tables\Actions\Action::make('view')
                     ->label('Lihat')
                     ->icon('heroicon-o-eye')
                     ->color('info')
                     ->url(fn($record) => ProjectScoreResource::getUrl('view', ['record' => $record->getKey()]))
-                    ->openUrlInNewTab(), // Optional
-
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
+
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery()
+            ->with([
+                'project.projectDescriptionThroughDetail.academicYear', // 🔹 relasi yang benar
+                'project.detail.header.classroom.gurus',                 // 🔹 tetap load untuk filter guru
+            ]);
+
+        $guru = auth()->user()->guru;
+        if ($guru) {
+            $query->whereHas('project.detail.header.classroom.gurus', function ($q) use ($guru) {
+                $q->where('guru_id', $guru->id);
+            });
+        }
+
+        return $query;
+    }
+
+
 
     public static function getPages(): array
     {

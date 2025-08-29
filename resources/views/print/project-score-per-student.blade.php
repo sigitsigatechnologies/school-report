@@ -7,14 +7,14 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 14px;
+            font-size: 12px;
             margin: 30px;
         }
 
         .judul {
             text-align: center;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             margin-bottom: 15px;
             text-transform: uppercase;
         }
@@ -30,6 +30,7 @@
             border: 1px solid #000;
             padding: 4px 6px;
             vertical-align: top;
+            font-size: 12px;
         }
 
         th {
@@ -54,7 +55,7 @@
         }
 
         .nilai-table td {
-            font-size: 10px;
+            font-size: 12px;
         }
 
         .nilai-table td.center {
@@ -63,14 +64,15 @@
 
         .info-table td {
             padding: 2px 4px;
-            font-size: 11px;
+            font-size: 12px;
         }
     </style>
 </head>
 
 <body>
-    <img src="{{ public_path('images/logo_bopkri.png') }}" 
-     style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index: -1;">
+    <img src="{{ public_path('images/logo_bopkri.png') }}"
+        style="position: fixed; top: 50%; left: 50%; transform: translate(-60%, -50%);
+           opacity: 0.5; width: 470px; z-index: -1;">
 
     <div class="judul">
         {{ $score->project->detail->header->header_name_project }}
@@ -92,13 +94,13 @@
         </tr>
         <tr>
             <td>Nama Sekolah</td>
-            <td>: {{ $schoolProfile->nama_sekolah}}</td>
+            <td>: {{ $schoolProfile->nama_sekolah }}</td>
             <td>TA</td>
             <td>: {{ $score->project->academicYear->tahun_ajaran ?? '-' }}</td>
         </tr>
         <tr>
             <td>Alamat Sekolah</td>
-            <td colspan="3">: {{ $schoolProfile->alamat}}</td>
+            <td colspan="3">: {{ $schoolProfile->alamat }}</td>
         </tr>
     </table>
 
@@ -153,20 +155,20 @@
                         $bobot = $detail->parameterPenilaian->bobot ?? '';
                     @endphp
                     <tr>
-                        <td>{{ $detail->capaianFase->subElement->element->dimension->name ?? '-' }}</td>
-                        <td>{{ $detail->capaianFase->subElement->element->name ?? '-' }}</td>
-                        <td>{{ $detail->capaianFase->description ?? '-' }}</td>
-                        <td class="center">{{ $bobot === 'BB' ? 'V' : '' }}</td>
-                        <td class="center">{{ $bobot === 'MB' ? 'V' : '' }}</td>
-                        <td class="center">{{ $bobot === 'BSH' ? 'V' : '' }}</td>
-                        <td class="center">{{ $bobot === 'SB' ? 'V' : '' }}</td>
+                        <td style="text-align:justify;  vertical-align:middle;">{{ $detail->capaianFase->subElement->element->dimension->name ?? '-' }}</td>
+                        <td style="text-align:justify;  vertical-align:middle;">{{ $detail->capaianFase->subElement->element->name ?? '-' }}</td>
+                        <td style="text-align:justify;  vertical-align:middle;">{{ $detail->capaianFase->description ?? '-' }}</td>
+                        <td style="text-align:center;  vertical-align:middle;" class="center">{{ $bobot === 'BB' ? 'V' : '' }}</td>
+                        <td style="text-align:center;  vertical-align:middle;" class="center">{{ $bobot === 'MB' ? 'V' : '' }}</td>
+                        <td style="text-align:center;  vertical-align:middle;" class="center">{{ $bobot === 'BSH' ? 'V' : '' }}</td>
+                        <td style="text-align:center;  vertical-align:middle;" class="center">{{ $bobot === 'SB' ? 'V' : '' }}</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
 
         {{-- Catatan Proses --}}
-     @php $catatan = $projectDetails->first()?->note_project ?? '-'; @endphp
+        @php $catatan = $projectDetails->first()?->note_project ?? '-'; @endphp
         @if ($catatan)
             <div class="catatan-box">
                 <strong>Catatan Proses:</strong>
@@ -219,13 +221,14 @@
             <td style="padding-top: 60px;">{{ $student->nama_ayah ?? '-' }}</td>
             <td style="padding-top: 60px;">
                 {{ $wali->name ?? '-' }}<br>
-                NIP {{ $wali->nip ?? '-' }}<br>
+                NIY {{ $wali->nip ?? '-' }}<br>
             </td>
             <td style="padding-top: 60px;">
-                {{ $schoolProfile->kepala_sekolah}}<br>
-                {{ $schoolProfile->nip_kepala_sekolah}}
+                {{ $schoolProfile->kepala_sekolah }}<br>
+                NIY {{ $schoolProfile->nip_kepala_sekolah }}
             </td>
         </tr>
     </table>
 </body>
+
 </html>

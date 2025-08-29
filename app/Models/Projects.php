@@ -10,9 +10,7 @@ class Projects extends Model
 {
     protected $fillable = [
         'title_project',
-        'project_description_detail_id',
-        'student_classroom_id',
-        'academic_year_id'
+        'project_description_detail_id'
     ];
 
     public function projectDescription(): BelongsTo
@@ -45,8 +43,28 @@ class Projects extends Model
         return $this->belongsTo(AcademicYear::class);
     }
 
-    public function studentClassroom()
+
+    public function classroom()
     {
-        return $this->belongsTo(StudentClassroom::class);
+        return $this->hasOneThrough(
+            Classroom::class,
+            ProjectDescription::class,
+            'id',              // FK di project_descriptions
+            'id',              // PK di classrooms
+            'project_description_id', // FK di projects
+            'classroom_id'     // FK di project_descriptions
+        );
+    }
+
+    public function projectDescriptionThroughDetail()
+    {
+        return $this->hasOneThrough(
+            ProjectDescription::class,
+            ProjectDescriptionDetails::class,
+            'id', // PK di ProjectDescriptionDetails
+            'id', // PK di ProjectDescription
+            'project_description_detail_id', // FK di Projects
+            'project_description_id' // FK di ProjectDescriptionDetails
+        );
     }
 }

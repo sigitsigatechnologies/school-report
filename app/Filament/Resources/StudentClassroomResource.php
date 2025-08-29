@@ -15,6 +15,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Request;
 
 class StudentClassroomResource extends Resource
 {
@@ -44,28 +45,10 @@ class StudentClassroomResource extends Resource
                 Select::make('student_id')
                     ->label('Siswa')
                     ->required()
-                    ->options(function () {
-                        $guru = auth()->user()?->guru;
-
-                        if (! $guru) {
-                            return [];
-                        }
-
-                        // ambil kelas yg dia jadi wali
-                        $waliClassroom = $guru->classrooms()->first(); // relasi guru -> classrooms
-
-                        if (! $waliClassroom) {
-                            return [];
-                        }
-
-                        // ambil siswa hanya dari kelas tsb
-                        return \App\Models\StudentClassroom::with('student')
-                            ->where('classroom_id', $waliClassroom->id)
-                            ->get()
-                            ->mapWithKeys(fn($sc) => [
-                                $sc->student_id => "{$sc->student->nama} - Kelas {$waliClassroom->name}"
-                            ]);
-                    })
+                    ->options(
+                        \App\Models\Student::orderBy('nama')
+                            ->pluck('nama', 'id')
+                    )
                     ->searchable()
                     ->placeholder('Pilih siswa'),
 
@@ -150,8 +133,15 @@ class StudentClassroomResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->where('wali_id', auth()->user()->guru?->id);
+
+        // Jika sedang di halaman edit record, biarkan record itu tetap bisa di-load
+        if ($recordId = Request::route('record')) {
+            $query->orWhere('id', $recordId);
+        }
+
+        return $query;
     }
 
 

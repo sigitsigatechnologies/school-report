@@ -19,8 +19,6 @@ return new class extends Migration
                 ->references('id')
                 ->on('project_description_details')
                 ->onDelete('cascade');
-                // Relasi ke student_classroom
-            $table->foreignId('student_classroom_id')->constrained()->cascadeOnDelete();
 
             $table->timestamps();
         });

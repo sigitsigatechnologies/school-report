@@ -5,7 +5,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 14px;
+            font-size: 12px;
             padding: 30px;
         }
 
@@ -21,6 +21,10 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 16px;
+        }
+
+        .info-table {
+            font-size: 12px;
         }
 
         .info-table td {
@@ -42,7 +46,7 @@
         .score-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 11px;
+            font-size: 12px;
         }
 
         .score-table th,
@@ -75,7 +79,8 @@
     </style>
 
     <img src="{{ public_path('images/logo_bopkri.png') }}"
-        style="position: fixed; top: 30%; left: 25%; opacity: 0.1; width: 400px; z-index: -1;">
+        style="position: fixed; top: 50%; left: 50%; transform: translate(-60%, -50%);
+           opacity: 0.1; width: 470px; z-index: -1;">
     <div class="title">LAPORAN HASIL BELAJAR</div>
 
     <table class="info-table">
@@ -148,7 +153,8 @@
                 @foreach ($details as $detail)
                     <tr>
                         <td style="text-align:center; vertical-align:middle;">{{ $no++ }}</td>
-                        <td style="text-align:justify; vertical-align:middle;">{{ $detail->masterMateri->mata_pelajaran }}</td>
+                        <td style="text-align:justify; vertical-align:middle;">
+                            {{ $detail->masterMateri->mata_pelajaran }}</td>
                         <td style="text-align:center; vertical-align:middle;">{{ $detail->nilai }}</td>
                         <td style="text-align:justify; ">{{ $detail->capaian_kompetensi ?? '—' }}</td>
                     </tr>
@@ -302,10 +308,10 @@
                 Wali Kelas,<br><br><br><br>
                 @if ($waliKelas)
                     <strong>{{ $waliKelas->name }}</strong><br>
-                    <strong>NIP {{ $waliKelas->nip }}</strong>
+                    <strong>NIY {{ $waliKelas->nip }}</strong>
                 @else
                     <strong>...................</strong><br>
-                    <strong>NIP ...................</strong>
+                    <strong>NIY ...................</strong>
                 @endif
             </td>
         </tr>

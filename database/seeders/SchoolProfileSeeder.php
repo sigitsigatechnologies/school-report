@@ -28,7 +28,7 @@ class SchoolProfileSeeder extends Seeder
             'kepala_sekolah' => 'Suparman, M.Pd.',
             'nip_kepala_sekolah' => 'NIP 123456789',
             'wali_kelas' => 'Himawan Sulistyo, M.Pd',
-            'nip_wali_kelas' => 'NIP 987654321',
+            'nip_wali_kelas' => '987654321',
             'kelas' => 'Kelas III (Tiga)',
             'fase' => 'C',
             'semester' => '2 (Dua)',

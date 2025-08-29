@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -54,6 +56,22 @@ class User extends Authenticatable
     public function guru()
     {
         return $this->hasOne(Guru::class);
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // kalau panel utamanya 'admin'
+        if ($panel->getId() === 'admin') {
+            return $this->hasRole('admin');
+        }
+
+        // kalau panel khusus P5
+        if ($panel->getId() === 'p5') {
+            return $this->hasAnyRole(['admin', 'guru', 'siswa']); 
+            // atur siapa saja yang boleh
+        }
+
+        return false;
     }
 
 

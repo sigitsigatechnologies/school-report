@@ -20,4 +20,9 @@ class ProjectDescriptionDetails extends Model
     {
         return $this->belongsTo(ProjectDescription::class, 'project_description_id');
     }
+
+    public function projectDescription()
+    {
+        return $this->belongsTo(ProjectDescription::class, 'project_description_id');
+    }
 }

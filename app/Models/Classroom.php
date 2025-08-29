@@ -26,7 +26,7 @@ class Classroom extends Model
     public function gurus()
     {
         return $this->belongsToMany(Guru::class, 'classroom_guru')
-                    ->withPivot('mapel', 'tahun_ajaran', 'role');
+                    ->withPivot('mapel', 'tahun_ajaran');
     }
 
     public function masterMateris()

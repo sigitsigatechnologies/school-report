@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('project_descriptions', function (Blueprint $table) {
+        Schema::create('penilaian_tes_details', function (Blueprint $table) {
             $table->id();
-            $table->string('header_name_project');
-            $table->foreignId('classroom_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('academic_year_id')->constrained()->cascadeOnDelete();
-            $table->string('fase');
+            $table->foreignId('penilaian_sumatif_detail_id')->constrained()->onDelete('cascade');
+            $table->integer('nilai_tes')->nullable();
+            $table->integer('nilai_non_tes')->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('project_descriptions');
+        Schema::dropIfExists('penilaian_tes_details');
     }
 };

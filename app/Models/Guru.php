@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Guru extends Model
 {
 
-    protected $table = 'guru'; 
+    protected $table = 'guru';
     protected $fillable = [
         'name',
         'nip',
@@ -48,5 +48,4 @@ class Guru extends Model
     {
         return $this->hasMany(StudentClassroom::class, 'wali_id');
     }
-
 }

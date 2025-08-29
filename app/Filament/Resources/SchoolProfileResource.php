@@ -42,9 +42,9 @@ class SchoolProfileResource extends Resource
                 TextInput::make('website')->label('Website'),
                 TextInput::make('email')->label('Email')->email(),
                 TextInput::make('kepala_sekolah')->label('Kepala Sekolah'),
-                TextInput::make('nip_kepala_sekolah')->label('NIP Kepala Sekolah'),
+                TextInput::make('nip_kepala_sekolah')->label('NIY Kepala Sekolah'),
                 TextInput::make('wali_kelas')->label('Wali Kelas'),
-                TextInput::make('nip_wali_kelas')->label('NIP Wali Kelas'),
+                TextInput::make('nip_wali_kelas')->label('NIY Wali Kelas'),
                 TextInput::make('kelas')->label('Kelas'),
                 TextInput::make('fase')->label('Fase'),
                 Select::make('academic_year_id')

@@ -92,6 +92,23 @@ class DetailsRelationManager extends RelationManager
                         ]);
                 })->toArray(),
                 [
+                    // TextColumn::make('rata_rata_unit')
+                    //     ->label('NA Sumatif Lingkup Materi')
+                    //     ->getStateUsing(function ($record) use ($penilaianSumatif) {
+                    //         $nilaiList = \App\Models\PenilaianSumatifDetail::where('penilaian_sumatif_id', $penilaianSumatif->id)
+                    //             ->where('student_id', $record->id)
+                    //             ->whereNotNull('nilai') // hanya ambil nilai yang ada
+                    //             ->pluck('nilai')
+                    //             ->toArray();
+
+                    //         if (count($nilaiList) === 0) return '-';
+
+                    //         $avg = array_sum($nilaiList) / count($nilaiList);
+                    //         return number_format($avg, 2);
+                    //     })->extraAttributes([
+                    //         'style' => 'background-color:rgb(124, 196, 244);', // biru muda
+                    //     ]),
+
                     TextColumn::make('rata_rata_unit')
                         ->label('NA Sumatif Lingkup Materi')
                         ->getStateUsing(function ($record) use ($penilaianSumatif) {
@@ -99,15 +116,20 @@ class DetailsRelationManager extends RelationManager
                                 ->where('student_id', $record->id)
                                 ->whereNotNull('nilai') // hanya ambil nilai yang ada
                                 ->pluck('nilai')
+                                ->filter(fn($n) => $n > 0) // buang nilai 0
                                 ->toArray();
 
-                            if (count($nilaiList) === 0) return '-';
+                            if (count($nilaiList) === 0) {
+                                return '-'; // kalau kosong tampil strip
+                            }
 
                             $avg = array_sum($nilaiList) / count($nilaiList);
                             return number_format($avg, 2);
-                        })->extraAttributes([
+                        })
+                        ->extraAttributes([
                             'style' => 'background-color:rgb(124, 196, 244);', // biru muda
                         ]),
+
 
                     TextColumn::make('nilai_tes')
                         ->label('Tes')
@@ -157,7 +179,7 @@ class DetailsRelationManager extends RelationManager
                         })->extraAttributes([
                             'style' => 'background-color:rgb(170, 254, 153);', // biru muda
                         ]),
-                        TextColumn::make('nilai_rapor')
+                    TextColumn::make('nilai_rapor')
                         ->label('Nilai Rapor')
                         ->getStateUsing(function ($record) use ($penilaianSumatif) {
                             // Ambil rata-rata unit
@@ -166,29 +188,29 @@ class DetailsRelationManager extends RelationManager
                                 ->whereNotNull('nilai')
                                 ->pluck('nilai')
                                 ->toArray();
-                    
+
                             $avgUnit = count($nilaiUnit) > 0 ? array_sum($nilaiUnit) / count($nilaiUnit) : null;
-                    
+
                             // Ambil tes dan non-tes untuk summary
                             $tes = \App\Models\PenilaianTesDetail::whereHas('detail', function ($q) use ($penilaianSumatif, $record) {
                                 $q->where('penilaian_sumatif_id', $penilaianSumatif->id)
                                     ->where('student_id', $record->id);
                             })->first();
-                    
+
                             $nilaiTes = $tes?->nilai_tes;
                             $nilaiNonTes = $tes?->nilai_non_tes;
-                    
+
                             $summaryScores = [];
                             if (!is_null($nilaiTes)) $summaryScores[] = $nilaiTes;
                             if (!is_null($nilaiNonTes)) $summaryScores[] = $nilaiNonTes;
-                    
+
                             $avgSummary = count($summaryScores) > 0 ? array_sum($summaryScores) / count($summaryScores) : null;
-                    
+
                             // Hitung nilai rapor
                             if (!is_null($avgUnit) && !is_null($avgSummary)) {
                                 return number_format(($avgUnit + $avgSummary) / 2, 2);
                             }
-                    
+
                             return '-';
                         })->extraAttributes([
                             'style' => 'background-color:rgb(255, 255, 160); font-weight: bold;', // kuning muda

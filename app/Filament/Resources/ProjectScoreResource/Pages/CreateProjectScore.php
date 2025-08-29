@@ -7,6 +7,7 @@ use App\Models\ProjectDetail;
 use App\Models\ProjectScoreDetail;
 use App\Models\Student;
 use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Log;
 
@@ -41,9 +42,68 @@ class CreateProjectScore extends CreateRecord
     //     }
     // }
 
+    /**
+     * DI BAWAH INI YG TERAKHIR 
+     */
+
+    // protected function afterCreate(): void
+    // {
+    //     $data = $this->form->getState(); // <--- ambil semua input form
+
+    //     $project = $this->record->project()->with([
+    //         'academicYear',
+    //         'projectDetails.capaianFase',
+    //         'detail.header.classroom.studentClassrooms.student',
+    //         'detail.header.classroom.studentClassrooms.academicYear',
+    //     ])->first();
+
+    //     if (!$project) return;
+
+    //     $classroom = $project->detail?->header?->classroom;
+
+    //     // filter student sesuai tahun ajaran & semester
+    //     $students = $classroom?->studentClassrooms
+    //         ->where('academic_year_id', $project->academic_year_id)
+    //         ->filter(fn($sc) => $sc->academicYear?->semester == $project->academicYear?->semester)
+    //         ->map(fn($sc) => $sc->student)
+    //         ->unique('id');
+
+    //     // $capaianFases = ProjectDetail::where('project_id', $project->id)
+    //     //     ->with('capaianFase')
+    //     //     ->get()
+    //     //     ->pluck('capaianFase')
+    //     //     ->filter()
+    //     //     ->unique('id');
+
+    //     $projectDetails = ProjectDetail::where('project_id', $project->id)
+    //         ->with('capaianFase')
+    //         ->get();
+
+
+    //     // generate detail
+    //     foreach ($students as $student) {
+    //         foreach ($projectDetails as $detail) {
+    //             $capaian = $detail->capaianFase;
+    //             if (!$capaian) continue;
+
+    //             $fieldKey = "nilai_{$student->id}_{$capaian->id}";
+    //             $parameterId = $data[$fieldKey] ?? null;
+
+    //             ProjectScoreDetail::create([
+    //                 'project_score_id'       => $this->record->id,
+    //                 'student_id'             => $student->id,
+    //                 'capaian_fase_id'        => $capaian->id,
+    //                 'parameter_penilaian_id' => $parameterId,
+    //                 'project_detail_id'      => $detail->id, // ← sudah langsung ada
+    //             ]);
+    //         }
+    //     }
+
+    // }
+
     protected function afterCreate(): void
     {
-        $data = $this->form->getState(); // <--- ambil semua input form
+        $data = $this->form->getState();
 
         $project = $this->record->project()->with([
             'academicYear',
@@ -56,43 +116,42 @@ class CreateProjectScore extends CreateRecord
 
         $classroom = $project->detail?->header?->classroom;
 
-        // filter student sesuai tahun ajaran & semester
+        // ambil semua siswa di kelas (tanpa filter semester/TA, kalau mau bisa ditambah filter)
         $students = $classroom?->studentClassrooms
-            ->where('academic_year_id', $project->academic_year_id)
-            ->filter(fn($sc) => $sc->academicYear?->semester == $project->academicYear?->semester)
             ->map(fn($sc) => $sc->student)
             ->unique('id');
-
-        // $capaianFases = ProjectDetail::where('project_id', $project->id)
-        //     ->with('capaianFase')
-        //     ->get()
-        //     ->pluck('capaianFase')
-        //     ->filter()
-        //     ->unique('id');
 
         $projectDetails = ProjectDetail::where('project_id', $project->id)
             ->with('capaianFase')
             ->get();
 
-
-        // generate detail
         foreach ($students as $student) {
             foreach ($projectDetails as $detail) {
                 $capaian = $detail->capaianFase;
                 if (!$capaian) continue;
-        
+
                 $fieldKey = "nilai_{$student->id}_{$capaian->id}";
+                $noteKey  = "noteInputs.{$student->id}_{$capaian->id}";
+
                 $parameterId = $data[$fieldKey] ?? null;
-        
-                ProjectScoreDetail::create([
-                    'project_score_id'       => $this->record->id,
-                    'student_id'             => $student->id,
-                    'capaian_fase_id'        => $capaian->id,
-                    'parameter_penilaian_id' => $parameterId,
-                    'project_detail_id'      => $detail->id, // ← sudah langsung ada
-                ]);
+                $note        = data_get($data, $noteKey);
+
+                // hanya simpan kalau ada nilai atau catatan
+                if ($parameterId || $note) {
+                    ProjectScoreDetail::updateOrCreate(
+                        [
+                            'project_score_id'  => $this->record->id,
+                            'student_id'        => $student->id,
+                            'capaian_fase_id'   => $capaian->id,
+                        ],
+                        [
+                            'parameter_penilaian_id' => $parameterId,
+                            'project_detail_id'      => $detail->id,
+                            'note_project'           => $note,
+                        ]
+                    );
+                }
             }
         }
-        
     }
 }

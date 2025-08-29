@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\ProjectScoreDetail;
 use App\Models\Student;
@@ -24,29 +25,61 @@ class PrintProjectScores extends Page implements HasForms, HasTable
     protected static ?string $navigationGroup = 'Printer';
 
     public ?int $selectedClassroom = null;
+    public ?int $selectedAcademicYear = null;
 
     public function form(Forms\Form $form): Forms\Form
     {
         return $form
             ->schema([
+
+                // Select::make('selectedClassroom')
+                //     ->label('Pilih Kelas')
+                //     ->options(function () {
+                //         $user = auth()->user();
+
+                //         // Jika guru, tampilkan hanya kelas yang dia ampu
+                //         if ($user->hasRole('guru')) {
+                //             return $user->guru
+                //                 ? $user->guru->classrooms->pluck('name', 'id')
+                //                 : [];
+                //         }
+
+                //         // Jika admin/operator, tampilkan semua kelas
+                //         return Classroom::all()->pluck('name', 'id');
+                //     })
+                //     ->searchable()
+                //     ->reactive()
+                //     ->afterStateUpdated(fn() => $this->resetTable()),
+
                 Select::make('selectedClassroom')
                     ->label('Pilih Kelas')
                     ->options(function () {
                         $user = auth()->user();
 
-                        // Jika guru, tampilkan hanya kelas yang dia ampu
-                        if ($user->hasRole('guru')) {
-                            return $user->guru
-                                ? $user->guru->classrooms->pluck('name', 'id')
-                                : [];
+                        $classrooms = $user->hasRole('guru')
+                            ? ($user->guru ? $user->guru->classrooms : collect())
+                            : Classroom::all();
+
+                        $options = [];
+
+                        foreach ($classrooms as $classroom) {
+                            // Ambil tahun ajaran aktif untuk kelas ini
+                            $activeYear = $classroom->academicYear()->where('is_active', 1)->first();
+                            $label = $classroom->name;
+
+                            if ($activeYear) {
+                                $label .= " - {$activeYear->tahun_ajaran}";
+                            }
+
+                            $options[$classroom->id] = $label;
                         }
 
-                        // Jika admin/operator, tampilkan semua kelas
-                        return Classroom::all()->pluck('name', 'id');
+                        return $options;
                     })
                     ->searchable()
                     ->reactive()
                     ->afterStateUpdated(fn() => $this->resetTable()),
+
             ]);
     }
 
@@ -55,16 +88,18 @@ class PrintProjectScores extends Page implements HasForms, HasTable
         return $table
             // ->query(Student::query()->where('classroom_id', $this->selectedClassroom))
             ->query(function () {
+
+
                 $guruId = auth()->user()?->guru?->id;
                 $selectedClassroom = $this->selectedClassroom;
-        
+
                 return Student::withExists(['projectScoreDetails']) // Efisien untuk cek exists
                     ->whereHas('studentClassrooms', function ($query) use ($guruId, $selectedClassroom) {
                         $query->where('classroom_id', $selectedClassroom)
                             ->where('wali_id', $guruId);
                     });
             })
-            
+
             ->columns([
                 TextColumn::make('nama')->label('Nama Siswa'),
                 TextColumn::make('nisn')->label('NISN'),
