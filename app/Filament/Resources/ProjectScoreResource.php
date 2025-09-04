@@ -40,43 +40,21 @@ class ProjectScoreResource extends Resource
                     ->label('Pilih Kelas')
                     ->options(function () {
                         $guru = auth()->user()->guru;
-
-                        if (!$guru) {
-                            return [];
-                        }
+                        if (!$guru) return [];
 
                         return $guru->classrooms()
-                            ->select('classrooms.id', 'classrooms.name') // <-- tabelnya disebutkan
-                            ->pluck('name', 'id'); // ambil name sebagai label, id sebagai value
+                            ->select('classrooms.id', 'classrooms.name')
+                            ->pluck('name', 'id');
                     })
                     ->required()
                     ->reactive()
-                    ->afterStateUpdated(function ($state, callable $set) {
-                        if ($state) {
-                            $classroom = \App\Models\Classroom::with('academicYear')->find($state);
-                            if ($classroom && $classroom->academicYear) {
-                                $set('academic_year_id', $classroom->academicYear->id);
-                            }
+                    ->afterStateUpdated(fn($state, callable $set) => $set('project_id', null)) // reset project saat kelas berubah
+                    ->afterStateHydrated(function ($state, callable $set, $record) {
+                        if ($record && $record->project) {
+                            // ambil classroom_id dari project yg udah tersimpan
+                            $set('classroom_id', $record->project->detail?->header?->classroom_id);
                         }
                     }),
-                Select::make('academic_year_id')
-                    ->label('Tahun Ajaran & Semester')
-                    ->options(
-                        AcademicYear::where('is_active', true)
-                            ->get()
-                            ->mapWithKeys(fn($item) => [
-                                $item->id => "{$item->tahun_ajaran}"
-                            ])
-                    )
-                    ->required()
-                    ->default(function (callable $get) {
-                        $classroomId = $get('classroom_id');
-                        if ($classroomId) {
-                            return \App\Models\Classroom::find($classroomId)?->academic_year_id;
-                        }
-                        return null;
-                    }),
-
 
                 Select::make('project_id')
                     ->label('Pilih Proyek')
@@ -86,18 +64,51 @@ class ProjectScoreResource extends Resource
 
                         return \App\Models\Projects::whereHas(
                             'detail.header',
-                            fn($q) =>
-                            $q->where('classroom_id', $classroomId)
-                        )
-                            ->pluck('title_project', 'id');
+                            fn($q) => $q->where('classroom_id', $classroomId)
+                        )->pluck('title_project', 'id');
                     })
                     ->required()
                     ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state) {
+                            $project = \App\Models\Projects::with('detail.header.classroom.academicYear')->find($state);
+                            if ($project && $project->detail?->header?->classroom?->academicYear) {
+                                $set('academic_year_id', $project->detail->header->classroom->academicYear->id);
+                            }
+                        }
+                    })
                     ->afterStateHydrated(function ($state, callable $set, $record) {
-                        if ($record && $record->project_id) {
-                            $set('project_id', $record->project_id);
+                        if ($record) {
+                            $set('project_id', $record->project_id); // langsung isi dari record
                         }
                     }),
+
+
+                Select::make('academic_year_id')
+                    ->label('Tahun Ajaran & Semester')
+                    ->options(function (callable $get) {
+                        $projectId = $get('project_id');
+                        if (!$projectId) return [];
+
+                        $project = \App\Models\Projects::with('detail.header.classroom.academicYear')->find($projectId);
+                        if (!$project || !$project->detail?->header?->classroom?->academicYear) return [];
+
+                        $academicYear = $project->detail->header->classroom->academicYear;
+                        return [
+                            $academicYear->id => "{$academicYear->tahun_ajaran} - Semester {$academicYear->semester}"
+                        ];
+                    })
+                    ->required()
+                    ->afterStateHydrated(function ($state, callable $set, $record) {
+                        // Saat edit, ambil dari relasi project yang udah tersimpan
+                        if ($record && $record->project) {
+                            $academicYearId = $record->project->detail?->header?->classroom?->academic_year_id;
+                            if ($academicYearId) {
+                                $set('academic_year_id', $academicYearId);
+                            }
+                        }
+                    }),
+
 
 
                 Section::make('Informasi Proyek')
@@ -105,41 +116,40 @@ class ProjectScoreResource extends Resource
                         $projectId = $get('project_id');
                         if (!$projectId) return [];
 
-                        $project = Projects::with('detail.header.classroom')->find($projectId);
-                        // $project = \App\Models\Projects::with('detail.header.classroom.studentClassrooms.academicYear')
-                        //     ->find($projectId);
+                        $project = \App\Models\Projects::with('detail.header.classroom.academicYear')->find($projectId);
+                        if (!$project) return [];
 
-                        // if (!$project) return [];
+                        $classroom = $project->detail?->header?->classroom;
+                        $academicYear = $classroom?->academicYear;
 
-                        $classroom = $project?->detail?->header?->classroom;
-                        // dd($classroom);
-                        $semester = $project?->academicYear?->semester ?? '-';
                         return [
                             Placeholder::make('judul')
-                                ->label('Judul ' . $project?->title_project ?? '-')
-                                ->content($project?->title_project ?? '-'),
+                                ->label('Judul')
+                                ->content($project->title_project ?? '-'),
 
+                            Placeholder::make('deskripsi')
+                                ->label('Deskripsi')
+                                ->content($project->detail->title ?? '-'),
 
-                            Placeholder::make('deskripsi')->label('Deskripsi')->content($project->detail->title ?? '-'),
                             Placeholder::make('kelas')
                                 ->label('Kelas')
-                                ->content($project?->detail?->header?->classroom?->name ?? '-'),
+                                ->content($classroom?->name ?? '-'),
 
                             Placeholder::make('tahun_ajaran')
                                 ->label('Tahun Ajaran')
-                                ->content($classroom->academicYear->tahun_ajaran ?? '-'),
+                                ->content($academicYear?->tahun_ajaran ?? '-'),
 
                             Placeholder::make('semester')
                                 ->label('Semester')
-                                ->content($classroom->academicYear->semester),
+                                ->content($academicYear?->semester ?? '-'),
 
                             Placeholder::make('fase')
                                 ->label('Fase')
-                                ->content($project?->detail?->header?->fase ?? '-'),
+                                ->content($project->detail?->header?->fase ?? '-'),
                         ];
                     })
-                    ->columns(2) // biar rapi 2 kolom
-                    ->disabled(), // 👈 memastikan tidak bisa diedit
+                    ->columns(2)
+                    ->disabled(),
 
 
                 Grid::make()

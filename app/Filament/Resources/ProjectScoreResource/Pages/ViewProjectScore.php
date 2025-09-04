@@ -46,7 +46,7 @@ class ViewProjectScore extends EditRecord
                     Placeholder::make('deskripsi')->label('Deskripsi')->content($project->detail->title ?? '-'),
                     Placeholder::make('kelas')->label('Kelas')->content($project->detail?->header?->classroom?->name ?? '-'),
                     Placeholder::make('tahun')->label('Tahun Ajaran')->content($project->detail?->header?->classroom->academicYear->tahun_ajaran ?? '-'),
-                    Placeholder::make('semester')->label('Semester')->content($project?->academicYear?->semester ?? '-'),
+                    Placeholder::make('semester')->label('Semester')->content($project->detail?->header->classroom->academicYear->semester ?? '-'),
                     Placeholder::make('fase')->label('Fase')->content($project->detail?->header?->fase ?? '-'),
                 ])
                 ->columns(2),

@@ -183,6 +183,8 @@ class PrintProjectScoreController extends Controller
             'wali' => $wali,
             'academicYear' => $academicYear,
             'schoolProfile' => $schoolProfile,
+            'studentClassroom' => $studentClassroom,
+            'firstDetail' => $firstDetail
         ])->setPaper('A4', 'portrait');
 
         return $pdf->stream("rapor-{$student->nama}.pdf");

@@ -91,13 +91,13 @@
             <td>Nama Peserta Didik</td>
             <td>: {{ $student->nama }}</td>
             <td>Kelas</td>
-            <td>: {{ $header->classroom->name ?? '-' }}</td>
+            <td>: {{ $studentClassroom->classroom->name?? '-' }}</td>
         </tr>
         <tr>
             <td>NISN</td>
             <td>: {{ $student->nisn }}</td>
             <td>Fase</td>
-            <td>: {{ $header->fase ?? '-' }}</td>
+            <td>: {{$firstDetail->projectDetail->project->detail->header->fase ?? '-' }}</td>
         </tr>
         <tr>
             <td>Nama Sekolah</td>
